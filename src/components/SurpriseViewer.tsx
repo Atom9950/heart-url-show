@@ -31,10 +31,9 @@ export const SurpriseViewer = () => {
     }
 
     try {
-       console.log('Attempting to decompress data...');
-       const decoded = decodeURIComponent(data);
-       const decompressed = LZString.decompress(decoded);
-       console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
+      console.log('Attempting to decompress data...');
+      const decompressed = LZString.decompressFromEncodedURIComponent(data);
+      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
       
       if (!decompressed) {
         console.error('LZString decompression returned null/empty');

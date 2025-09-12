@@ -124,7 +124,7 @@ export const SurpriseForm = () => {
       const dataString = JSON.stringify(formData);
       console.log('Original data size:', dataString.length, 'characters');
       
-      const compressed = LZString.compress(dataString);
+      const compressed = LZString.compressToEncodedURIComponent(dataString);
       console.log('Compressed data size:', compressed.length, 'characters');
       
       if (compressed.length > 50000) { // Warn if URL might be too long
@@ -134,9 +134,7 @@ export const SurpriseForm = () => {
         });
       }
       
-      // Extra-encode to preserve '+' and special chars through URLSearchParams decoding
-      const encoded = encodeURIComponent(compressed);
-      const url = `${window.location.origin}/surprise?data=${encoded}`;
+      const url = `${window.location.origin}/surprise?data=${compressed}`;
       console.log('Final URL length:', url.length, 'characters');
       
       navigator.clipboard.writeText(url).then(() => {
