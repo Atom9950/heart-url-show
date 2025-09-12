@@ -134,7 +134,7 @@ export const SurpriseForm = () => {
         });
       }
       
-      const url = `${window.location.origin}/surprise?data=${compressed}`;
+      const url = `${window.location.origin}?data=${compressed}`;
       console.log('Final URL length:', url.length, 'characters');
       
       navigator.clipboard.writeText(url).then(() => {
