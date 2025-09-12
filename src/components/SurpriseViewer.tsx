@@ -21,56 +21,63 @@ export const SurpriseViewer = () => {
   const [currentPhase, setCurrentPhase] = useState<'intro' | 'birthday' | 'complete'>('intro');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // For HashRouter, we need to handle the hash portion
-    let dataParam = searchParams.get('data');
+// In your SurpriseViewer component
+useEffect(() => {
+  // For HashRouter, we need to handle the hash portion
+  let dataParam = null;
+  
+  // Check if we're in a hash URL
+  if (window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    dataParam = hashParams.get('data');
     
-    // If no data found in search params, check if we're in a hash URL
-    if (!dataParam && window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-      dataParam = hashParams.get('data');
+    // Decode the URI component first
+    if (dataParam) {
+      dataParam = decodeURIComponent(dataParam);
     }
+  }
+  
+  console.log('URL data parameter length:', dataParam?.length || 0);
+  console.log('Full URL:', window.location.href);
+  console.log('Hash:', window.location.hash);
+  
+  if (!dataParam) {
+    setError('No surprise data found in the URL');
+    return;
+  }
+
+  try {
+    console.log('Attempting to decompress data...');
+    // Use decompressFromUTF16 instead of decompressFromEncodedURIComponent
+    const decompressed = LZString.decompressFromUTF16(dataParam);
+    console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
     
-    console.log('URL data parameter length:', dataParam?.length || 0);
-    console.log('Full URL:', window.location.href);
-    console.log('Hash:', window.location.hash);
-    
-    if (!dataParam) {
-      setError('No surprise data found in the URL');
+    if (!decompressed) {
+      console.error('LZString decompression returned null/empty');
+      setError('Failed to decompress surprise data - the link may be corrupted or too large');
       return;
     }
 
-    try {
-      console.log('Attempting to decompress data...');
-      const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
-      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
-      
-      if (!decompressed) {
-        console.error('LZString decompression returned null/empty');
-        setError('Failed to decompress surprise data - the link may be corrupted or too large');
-        return;
-      }
-
-      console.log('Parsing JSON data...');
-      const parsed = JSON.parse(decompressed) as SurpriseData;
-      console.log('Parsed data:', {
-        name: parsed.name,
-        imageCount: parsed.images?.length || 0,
-        hasMessage: !!parsed.message,
-        hasMusic: !!parsed.music
-      });
-      
-      if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-        setError('Invalid surprise data format - missing required fields');
-        return;
-      }
-
-      setSurpriseData(parsed);
-    } catch (err) {
-      console.error('Error parsing surprise data:', err);
-      setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    console.log('Parsing JSON data...');
+    const parsed = JSON.parse(decompressed) as SurpriseData;
+    console.log('Parsed data:', {
+      name: parsed.name,
+      imageCount: parsed.images?.length || 0,
+      hasMessage: !!parsed.message,
+      hasMusic: !!parsed.music
+    });
+    
+    if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+      setError('Invalid surprise data format - missing required fields');
+      return;
     }
-  }, [searchParams]);
+
+    setSurpriseData(parsed);
+  } catch (err) {
+    console.error('Error parsing surprise data:', err);
+    setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  }
+}, [searchParams]);
 
   const handleIntroComplete = () => {
     setCurrentPhase('birthday');

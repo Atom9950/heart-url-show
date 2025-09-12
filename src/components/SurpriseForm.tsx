@@ -31,11 +31,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.3,  // Reduced from 0.5 to make URLs smaller
-      maxWidthOrHeight: 600,  // Reduced from 800
+      maxSizeMB: 0.3,
+      maxWidthOrHeight: 600,
       useWebWorker: true,
-      fileType: 'image/jpeg',  // Force JPEG for better compression
-      initialQuality: 0.8,  // Add quality setting
+      fileType: 'image/jpeg',
+      initialQuality: 0.8,
     };
     
     try {
@@ -110,57 +110,65 @@ export const SurpriseForm = () => {
     },
   });
 
-// In your SurpriseForm component
-const generateSurpriseUrl = () => {
-  if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
-    toast({
-      title: "Missing information",
-      description: "Please fill in name, message, and add at least one image",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    const dataString = JSON.stringify(formData);
-    console.log('Original data size:', dataString.length, 'characters');
-    
-    const compressed = LZString.compressToEncodedURIComponent(dataString);
-    console.log('Compressed data size:', compressed.length, 'characters');
-    
-    if (compressed.length > 50000) {
+  const generateSurpriseUrl = () => {
+    if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
       toast({
-        title: "Data might be too large",
-        description: `Compressed size: ${Math.round(compressed.length/1000)}KB. Some browsers may have issues with very long URLs.`,
+        title: "Missing information",
+        description: "Please fill in name, message, and add at least one image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const dataString = JSON.stringify(formData);
+      console.log('Original data size:', dataString.length, 'characters');
+      
+      // Use compressToUTF16 instead of compressToEncodedURIComponent
+      // This creates a shorter string that's easier to handle in URLs
+      const compressed = LZString.compressToUTF16(dataString);
+      console.log('Compressed data size:', compressed.length, 'characters');
+      
+      if (compressed.length > 10000) {
+        toast({
+          title: "Data might be too large",
+          description: `Compressed size: ${Math.round(compressed.length/1000)}KB. Try using fewer or smaller images.`,
+        });
+      }
+      
+      // Create the URL with the compressed data
+      const url = `${window.location.origin}/#/surprise?data=${encodeURIComponent(compressed)}`;
+      console.log('Final URL length:', url.length, 'characters');
+      console.log('Final URL:', url);
+      
+      navigator.clipboard.writeText(url).then(() => {
+        toast({
+          title: "Link copied!",
+          description: "Share this magical surprise link with your loved one",
+        });
+      }).catch(() => {
+        // Fallback if clipboard API fails
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        toast({
+          title: "Link generated!",
+          description: "Copy the URL from your browser address bar",
+        });
+      });
+    } catch (error) {
+      console.error('Error generating URL:', error);
+      toast({
+        title: "Generation failed",
+        description: "Failed to create surprise link. Try using fewer or smaller images.",
+        variant: "destructive",
       });
     }
-    
-    // IMPORTANT: Use hash-based URL for HashRouter
-    const url = `${window.location.origin}/#/surprise?data=${compressed}`;
-    console.log('Final URL length:', url.length, 'characters');
-    console.log('Final URL:', url);
-    
-    navigator.clipboard.writeText(url).then(() => {
-      toast({
-        title: "Link copied!",
-        description: "Share this magical surprise link with your loved one",
-      });
-    }).catch(() => {
-      // Fallback if clipboard API fails
-      toast({
-        title: "Link generated!",
-        description: "Copy the URL from your browser address bar",
-      });
-    });
-  } catch (error) {
-    console.error('Error generating URL:', error);
-    toast({
-      title: "Generation failed",
-      description: "Failed to create surprise link. Try using fewer or smaller images.",
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   const removeImage = (index: number) => {
     setFormData(prev => ({
