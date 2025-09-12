@@ -31,9 +31,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.5,
-      maxWidthOrHeight: 800,
+      maxSizeMB: 0.3,  // Reduced from 0.5 to make URLs smaller
+      maxWidthOrHeight: 600,  // Reduced from 800
       useWebWorker: true,
+      fileType: 'image/jpeg',  // Force JPEG for better compression
+      initialQuality: 0.8,  // Add quality setting
     };
     
     try {
@@ -118,15 +120,43 @@ export const SurpriseForm = () => {
       return;
     }
 
-    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(formData));
-    const url = `${window.location.origin}/surprise?data=${compressed}`;
-    
-    navigator.clipboard.writeText(url).then(() => {
-      toast({
-        title: "Link copied!",
-        description: "Share this magical surprise link with your loved one",
+    try {
+      const dataString = JSON.stringify(formData);
+      console.log('Original data size:', dataString.length, 'characters');
+      
+      const compressed = LZString.compressToEncodedURIComponent(dataString);
+      console.log('Compressed data size:', compressed.length, 'characters');
+      
+      if (compressed.length > 50000) { // Warn if URL might be too long
+        toast({
+          title: "Data might be too large",
+          description: `Compressed size: ${Math.round(compressed.length/1000)}KB. Some browsers may have issues with very long URLs.`,
+        });
+      }
+      
+      const url = `${window.location.origin}/surprise?data=${compressed}`;
+      console.log('Final URL length:', url.length, 'characters');
+      
+      navigator.clipboard.writeText(url).then(() => {
+        toast({
+          title: "Link copied!",
+          description: "Share this magical surprise link with your loved one",
+        });
+      }).catch(() => {
+        // Fallback if clipboard API fails
+        toast({
+          title: "Link generated!",
+          description: "Copy the URL from your browser address bar",
+        });
       });
-    });
+    } catch (error) {
+      console.error('Error generating URL:', error);
+      toast({
+        title: "Generation failed",
+        description: "Failed to create surprise link. Try using fewer or smaller images.",
+        variant: "destructive",
+      });
+    }
   };
 
   const removeImage = (index: number) => {

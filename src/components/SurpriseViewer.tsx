@@ -23,29 +23,42 @@ export const SurpriseViewer = () => {
 
   useEffect(() => {
     const data = searchParams.get('data');
+    console.log('URL data parameter length:', data?.length || 0);
+    
     if (!data) {
       setError('No surprise data found in the URL');
       return;
     }
 
     try {
+      console.log('Attempting to decompress data...');
       const decompressed = LZString.decompressFromEncodedURIComponent(data);
+      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
+      
       if (!decompressed) {
-        setError('Failed to decompress surprise data');
+        console.error('LZString decompression returned null/empty');
+        setError('Failed to decompress surprise data - the link may be corrupted or too large');
         return;
       }
 
+      console.log('Parsing JSON data...');
       const parsed = JSON.parse(decompressed) as SurpriseData;
+      console.log('Parsed data:', {
+        name: parsed.name,
+        imageCount: parsed.images?.length || 0,
+        hasMessage: !!parsed.message,
+        hasMusic: !!parsed.music
+      });
       
       if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-        setError('Invalid surprise data format');
+        setError('Invalid surprise data format - missing required fields');
         return;
       }
 
       setSurpriseData(parsed);
     } catch (err) {
       console.error('Error parsing surprise data:', err);
-      setError('Failed to load surprise data');
+      setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [searchParams]);
 
