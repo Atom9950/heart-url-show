@@ -2,41 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Romantic Birthday Surprise Design System - All colors MUST be HSL */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Romantic Color Palette */
+    --background: 340 15% 7%;
+    --foreground: 340 30% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 340 20% 10%;
+    --card-foreground: 340 25% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 340 25% 8%;
+    --popover-foreground: 340 30% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 340 75% 55%;
+    --primary-foreground: 340 15% 95%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 45 80% 60%;
+    --secondary-foreground: 340 20% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 340 15% 15%;
+    --muted-foreground: 340 20% 70%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 320 60% 65%;
+    --accent-foreground: 340 15% 95%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 340 20% 20%;
+    --input: 340 20% 15%;
+    --ring: 340 75% 55%;
 
-    --radius: 0.5rem;
+    /* Romantic Theme Colors */
+    --rose: 340 75% 55%;
+    --rose-light: 340 65% 70%;
+    --rose-dark: 340 80% 40%;
+    --gold: 45 80% 60%;
+    --gold-light: 45 70% 75%;
+    --champagne: 40 50% 85%;
+    --blush: 350 50% 80%;
+    --romantic-dark: 340 25% 8%;
+    --romantic-darker: 340 30% 4%;
+
+    /* Gradients */
+    --gradient-romantic: linear-gradient(135deg, hsl(var(--rose)), hsl(var(--accent)));
+    --gradient-sunset: linear-gradient(180deg, hsl(var(--rose-dark)), hsl(var(--gold)));
+    --gradient-sparkle: linear-gradient(45deg, hsl(var(--gold)), hsl(var(--champagne)));
+    --gradient-party: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--rose-light)));
+
+    /* Shadows & Effects */
+    --shadow-romantic: 0 20px 40px -10px hsl(var(--rose) / 0.4);
+    --shadow-glow: 0 0 30px hsl(var(--gold) / 0.3);
+    --shadow-party: 0 10px 25px hsl(var(--accent) / 0.2);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -55,34 +76,25 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  .light {
+    /* Light mode for forms - softer romantic theme */
+    --background: 340 30% 95%;
+    --foreground: 340 25% 15%;
+    --card: 340 20% 98%;
+    --card-foreground: 340 25% 15%;
+    --border: 340 20% 85%;
+    --input: 340 15% 90%;
+  }
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Dark romantic theme for experiences */
+    --background: 340 15% 7%;
+    --foreground: 340 30% 95%;
+    --card: 340 20% 10%;
+    --card-foreground: 340 25% 92%;
+    --border: 340 20% 20%;
+    --input: 340 20% 15%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -100,6 +112,89 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    overflow-x: hidden;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Romantic Animations */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-sparkle {
+    animation: sparkle 2s ease-in-out infinite;
+  }
+  
+  .animate-heart-bounce {
+    animation: heartBounce 1.5s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  /* Particle Effects */
+  .floating-hearts::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 85c-25-20-40-35-40-55 0-15 10-25 25-25 10 0 15 5 15 15 0-10 5-15 15-15 15 0 25 10 25 25 0 20-15 35-40 55z' fill='%23ff6b9d' opacity='0.1'/%3E%3C/svg%3E");
+    animation: floatUp 8s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Interactive Elements */
+  .romantic-button {
+    background: var(--gradient-romantic);
+    border: 1px solid hsl(var(--rose-light));
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-romantic);
+    transition: all 0.3s ease;
+  }
+  
+  .romantic-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .party-button {
+    background: var(--gradient-party);
+    border: 1px solid hsl(var(--gold));
+    color: hsl(var(--romantic-dark));
+    box-shadow: var(--shadow-party);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes heartBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+@keyframes glow {
+  0% { box-shadow: var(--shadow-romantic); }
+  100% { box-shadow: var(--shadow-glow); }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
 }
