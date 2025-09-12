@@ -22,17 +22,27 @@ export const SurpriseViewer = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const data = searchParams.get('data');
-    console.log('URL data parameter length:', data?.length || 0);
+    // For HashRouter, we need to handle the hash portion
+    let dataParam = searchParams.get('data');
     
-    if (!data) {
+    // If no data found in search params, check if we're in a hash URL
+    if (!dataParam && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      dataParam = hashParams.get('data');
+    }
+    
+    console.log('URL data parameter length:', dataParam?.length || 0);
+    console.log('Full URL:', window.location.href);
+    console.log('Hash:', window.location.hash);
+    
+    if (!dataParam) {
       setError('No surprise data found in the URL');
       return;
     }
 
     try {
       console.log('Attempting to decompress data...');
-      const decompressed = LZString.decompressFromEncodedURIComponent(data);
+      const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
       console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
       
       if (!decompressed) {
