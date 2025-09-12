@@ -134,7 +134,9 @@ export const SurpriseForm = () => {
         });
       }
       
-      const url = `${window.location.origin}/surprise?data=${compressed}`;
+      // Extra-encode to preserve '+' and special chars through URLSearchParams decoding
+      const encoded = encodeURIComponent(compressed);
+      const url = `${window.location.origin}/surprise?data=${encoded}`;
       console.log('Final URL length:', url.length, 'characters');
       
       navigator.clipboard.writeText(url).then(() => {

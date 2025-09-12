@@ -32,7 +32,9 @@ export const SurpriseViewer = () => {
 
     try {
       console.log('Attempting to decompress data...');
-      const decompressed = LZString.decompressFromEncodedURIComponent(data);
+      // Normalize in case '+' was converted to space by URL parsing
+      const normalized = data.replace(/ /g, '+');
+      const decompressed = LZString.decompressFromEncodedURIComponent(normalized);
       console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
       
       if (!decompressed) {
