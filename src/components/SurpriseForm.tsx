@@ -19,6 +19,41 @@ interface FormData {
   music?: string;
 }
 
+// IndexedDB utility functions
+const openDB = () => {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open('SurpriseAppDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('surprises')) {
+        db.createObjectStore('surprises', { keyPath: 'id' });
+      }
+    };
+  });
+};
+
+const storeSurpriseData = async (id: string, data: string): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction('surprises', 'readwrite');
+    const store = transaction.objectStore('surprises');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.put({ id, data, timestamp: Date.now() });
+      
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Error storing data in IndexedDB:', error);
+    throw error;
+  }
+};
+
 export const SurpriseForm = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -31,11 +66,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.2,  // Reduced further
-      maxWidthOrHeight: 500,  // Reduced further
+      maxSizeMB: 0.1,  // Reduced even further
+      maxWidthOrHeight: 400,  // Reduced even further
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.7,  // Reduced quality
+      initialQuality: 0.6,  // Reduced quality even more
     };
     
     try {
@@ -53,12 +88,12 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 5,  // Reduced from 10 to 5
+    maxFiles: 3,  // Reduced to 3 images
     onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length + formData.images.length > 5) {
+      if (acceptedFiles.length + formData.images.length > 3) {
         toast({
           title: "Too many images",
-          description: "Maximum 5 images allowed",
+          description: "Maximum 3 images allowed",
           variant: "destructive",
         });
         return;
@@ -94,23 +129,20 @@ export const SurpriseForm = () => {
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setFormData(prev => ({
-            ...prev,
-            music: reader.result as string,
-          }));
-          toast({
-            title: "Music uploaded",
-            description: "Background music added successfully",
-          });
-        };
-        reader.readAsDataURL(acceptedFiles[0]);
+        // Don't store music as data URL, just store the file name
+        setFormData(prev => ({
+          ...prev,
+          music: acceptedFiles[0].name, // Store only the file name
+        }));
+        toast({
+          title: "Music uploaded",
+          description: "Background music added successfully (note: music files are not stored for sharing)",
+        });
       }
     },
   });
 
-  const generateSurpriseUrl = () => {
+  const generateSurpriseUrl = async () => {
     if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
       toast({
         title: "Missing information",
@@ -121,17 +153,20 @@ export const SurpriseForm = () => {
     }
 
     try {
-      const dataString = JSON.stringify(formData);
-      console.log('Original data size:', dataString.length, 'characters');
+      // Create a simplified version without music data URLs
+      const dataToStore = {
+        ...formData,
+        music: formData.music ? 'has_music' : undefined // Don't store actual music data
+      };
+      
+      const dataString = JSON.stringify(dataToStore);
+      console.log('Data size to store:', dataString.length, 'characters');
       
       // Generate a unique ID for this surprise
       const surpriseId = Date.now().toString(36) + Math.random().toString(36).substr(2);
       
-      // Store the data in localStorage
-      localStorage.setItem(`surprise_${surpriseId}`, dataString);
-      
-      // Set expiration (24 hours)
-      localStorage.setItem(`surprise_expiry_${surpriseId}`, (Date.now() + 24 * 60 * 60 * 1000).toString());
+      // Store the data in IndexedDB
+      await storeSurpriseData(surpriseId, dataString);
       
       // Create the URL with just the ID
       const url = `${window.location.origin}/#/surprise?id=${surpriseId}`;
@@ -245,7 +280,7 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Romantic Photos (Up to 5)
+                Romantic Photos (Up to 3)
               </Label>
               <div
                 {...getImageProps()}
@@ -262,7 +297,7 @@ export const SurpriseForm = () => {
               </div>
 
               {formData.images.length > 0 && (
-                <div className="grid grid-cols-4 gap-4 mt-4">
+                <div className="grid grid-cols-3 gap-4 mt-4">
                   {formData.images.map((image, index) => (
                     <motion.div
                       key={index}
@@ -298,7 +333,7 @@ export const SurpriseForm = () => {
                 <input {...getMusicInputProps()} />
                 <Music className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-foreground text-sm">
-                  {formData.music ? 'Music uploaded ✨' : 'Add a romantic song'}
+                  {formData.music ? 'Music uploaded ✨' : 'Add a romantic song (name only)'}
                 </p>
               </div>
             </div>
