@@ -31,11 +31,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.3,
-      maxWidthOrHeight: 600,
+      maxSizeMB: 0.2,  // Reduced further
+      maxWidthOrHeight: 500,  // Reduced further
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.8,
+      initialQuality: 0.7,  // Reduced quality
     };
     
     try {
@@ -53,12 +53,12 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 10,
+    maxFiles: 5,  // Reduced from 10 to 5
     onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length + formData.images.length > 10) {
+      if (acceptedFiles.length + formData.images.length > 5) {
         toast({
           title: "Too many images",
-          description: "Maximum 10 images allowed",
+          description: "Maximum 5 images allowed",
           variant: "destructive",
         });
         return;
@@ -124,19 +124,17 @@ export const SurpriseForm = () => {
       const dataString = JSON.stringify(formData);
       console.log('Original data size:', dataString.length, 'characters');
       
-      // Use base64 encoding instead of URI encoding for better reliability
-      const compressed = LZString.compressToBase64(dataString);
-      console.log('Compressed data size:', compressed.length, 'characters');
+      // Generate a unique ID for this surprise
+      const surpriseId = Date.now().toString(36) + Math.random().toString(36).substr(2);
       
-      if (compressed.length > 10000) {
-        toast({
-          title: "Data might be too large",
-          description: `Compressed size: ${Math.round(compressed.length/1000)}KB. Try using fewer or smaller images.`,
-        });
-      }
+      // Store the data in localStorage
+      localStorage.setItem(`surprise_${surpriseId}`, dataString);
       
-      // Create the URL with the compressed data
-      const url = `${window.location.origin}/#/surprise?data=${compressed}`;
+      // Set expiration (24 hours)
+      localStorage.setItem(`surprise_expiry_${surpriseId}`, (Date.now() + 24 * 60 * 60 * 1000).toString());
+      
+      // Create the URL with just the ID
+      const url = `${window.location.origin}/#/surprise?id=${surpriseId}`;
       console.log('Final URL length:', url.length, 'characters');
       console.log('Final URL:', url);
       
@@ -247,7 +245,7 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Romantic Photos (Up to 10)
+                Romantic Photos (Up to 5)
               </Label>
               <div
                 {...getImageProps()}

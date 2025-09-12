@@ -24,37 +24,42 @@ export const SurpriseViewer = () => {
 // In your SurpriseViewer component
 useEffect(() => {
   // For HashRouter, we need to handle the hash portion
-  let dataParam = null;
+  let surpriseId = null;
   
   // Check if we're in a hash URL
   if (window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-    dataParam = hashParams.get('data');
+    surpriseId = hashParams.get('id');
   }
   
-  console.log('URL data parameter length:', dataParam?.length || 0);
+  console.log('Surprise ID:', surpriseId);
   console.log('Full URL:', window.location.href);
   console.log('Hash:', window.location.hash);
   
-  if (!dataParam) {
-    setError('No surprise data found in the URL');
+  if (!surpriseId) {
+    setError('No surprise ID found in the URL');
     return;
   }
 
   try {
-    console.log('Attempting to decompress data...');
-    // Use decompressFromBase64 instead of other methods
-    const decompressed = LZString.decompressFromBase64(dataParam);
-    console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
+    // Check if the surprise has expired
+    const expiry = localStorage.getItem(`surprise_expiry_${surpriseId}`);
+    if (!expiry || Date.now() > parseInt(expiry)) {
+      setError('This surprise link has expired or is invalid');
+      return;
+    }
+
+    // Retrieve the data from localStorage
+    const dataString = localStorage.getItem(`surprise_${surpriseId}`);
+    console.log('Retrieved data size:', dataString?.length || 0);
     
-    if (!decompressed) {
-      console.error('LZString decompression returned null/empty');
-      setError('Failed to decompress surprise data - the link may be corrupted or too large');
+    if (!dataString) {
+      setError('Surprise data not found - the link may be expired or invalid');
       return;
     }
 
     console.log('Parsing JSON data...');
-    const parsed = JSON.parse(decompressed) as SurpriseData;
+    const parsed = JSON.parse(dataString) as SurpriseData;
     console.log('Parsed data:', {
       name: parsed.name,
       imageCount: parsed.images?.length || 0,
