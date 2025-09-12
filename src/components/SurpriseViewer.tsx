@@ -30,11 +30,6 @@ useEffect(() => {
   if (window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
     dataParam = hashParams.get('data');
-    
-    // Decode the URI component first
-    if (dataParam) {
-      dataParam = decodeURIComponent(dataParam);
-    }
   }
   
   console.log('URL data parameter length:', dataParam?.length || 0);
@@ -48,8 +43,8 @@ useEffect(() => {
 
   try {
     console.log('Attempting to decompress data...');
-    // Use decompressFromUTF16 instead of decompressFromEncodedURIComponent
-    const decompressed = LZString.decompressFromUTF16(dataParam);
+    // Use decompressFromBase64 instead of other methods
+    const decompressed = LZString.decompressFromBase64(dataParam);
     console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
     
     if (!decompressed) {

@@ -124,9 +124,8 @@ export const SurpriseForm = () => {
       const dataString = JSON.stringify(formData);
       console.log('Original data size:', dataString.length, 'characters');
       
-      // Use compressToUTF16 instead of compressToEncodedURIComponent
-      // This creates a shorter string that's easier to handle in URLs
-      const compressed = LZString.compressToUTF16(dataString);
+      // Use base64 encoding instead of URI encoding for better reliability
+      const compressed = LZString.compressToBase64(dataString);
       console.log('Compressed data size:', compressed.length, 'characters');
       
       if (compressed.length > 10000) {
@@ -137,7 +136,7 @@ export const SurpriseForm = () => {
       }
       
       // Create the URL with the compressed data
-      const url = `${window.location.origin}/#/surprise?data=${encodeURIComponent(compressed)}`;
+      const url = `${window.location.origin}/#/surprise?data=${compressed}`;
       console.log('Final URL length:', url.length, 'characters');
       console.log('Final URL:', url);
       
