@@ -124,7 +124,7 @@ export const SurpriseForm = () => {
       const dataString = JSON.stringify(formData);
       console.log('Original data size:', dataString.length, 'characters');
       
-      const compressed = LZString.compressToEncodedURIComponent(dataString);
+      const compressed = LZString.compress(dataString);
       console.log('Compressed data size:', compressed.length, 'characters');
       
       if (compressed.length > 50000) { // Warn if URL might be too long

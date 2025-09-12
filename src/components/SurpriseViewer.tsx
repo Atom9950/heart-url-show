@@ -31,11 +31,10 @@ export const SurpriseViewer = () => {
     }
 
     try {
-      console.log('Attempting to decompress data...');
-      // Normalize in case '+' was converted to space by URL parsing
-      const normalized = data.replace(/ /g, '+');
-      const decompressed = LZString.decompressFromEncodedURIComponent(normalized);
-      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
+       console.log('Attempting to decompress data...');
+       const decoded = decodeURIComponent(data);
+       const decompressed = LZString.decompress(decoded);
+       console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
       
       if (!decompressed) {
         console.error('LZString decompression returned null/empty');
