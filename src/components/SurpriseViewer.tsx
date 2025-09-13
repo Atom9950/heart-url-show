@@ -72,7 +72,7 @@ export const SurpriseViewer = () => {
         
         const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
           headers: {
-            'X-Master-Key': '$2a$10$8aKhcZN.5c8kU2Y7Hh3FsOGqW0VfZNnDJR4X8P9vN7cM6qT3eR1wS' // You'll need to get a free API key
+            'X-Master-Key': '$2a$10$xSEsVHZ2e.njkuRkHeo.2.GRSxo07BX5dyxn1p7LeVTc.k7ZGjfYy' // You'll need to get a free API key
           }
         });
 
