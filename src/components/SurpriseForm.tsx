@@ -344,7 +344,8 @@ export const SurpriseForm = () => {
             </motion.div>
 
             <div className="text-center text-sm text-muted-foreground">
-              💡 Your surprise will be encoded in the URL - works on any device!
+              💡 Your surprise is encoded in the URL - works on any device!<br/>
+              <span className="text-xs">Using 1 optimized image keeps links shareable 📱</span>
             </div>
           </CardContent>
         </Card>
