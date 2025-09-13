@@ -54,7 +54,7 @@ export const SurpriseViewer = () => {
         
         const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
           headers: {
-            'X-Master-Key': '$2a$10$LQuT..l68bk1z0aT899ea.xEh8LtDQTnu9rutrWK6hYwRS83Apvci' // Same key as in the form
+            'X-Master-Key': '$2a$10$WJ.11jyq9Ofs5sq3ZIJ5AeEzSXF5uu02ED2GEwo2ljV0YOQf5f4Re' // Same key as in the form
           }
         });
 

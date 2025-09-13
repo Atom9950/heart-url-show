@@ -19,7 +19,7 @@ interface FormData {
 }
 
 // Replace this with your actual JSONBin.io Master Key
-const JSONBIN_MASTER_KEY = '$2a$10$LQuT..l68bk1z0aT899ea.xEh8LtDQTnu9rutrWK6hYwRS83Apvci';
+const JSONBIN_MASTER_KEY = '$2a$10$WJ.11jyq9Ofs5sq3ZIJ5AeEzSXF5uu02ED2GEwo2ljV0YOQf5f4Re';
 
 export const SurpriseForm = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -125,7 +125,7 @@ export const SurpriseForm = () => {
     }
 
     // Check if JSONBin key is configured
-    if (JSONBIN_MASTER_KEY === '$2a$10$LQuT..l68bk1z0aT899ea.xEh8LtDQTnu9rutrWK6hYwRS83Apvci') {
+    if (JSONBIN_MASTER_KEY === '$2a$10$WJ.11jyq9Ofs5sq3ZIJ5AeEzSXF5uu02ED2GEwo2ljV0YOQf5f4Re') {
       toast({
         title: "Configuration needed",
         description: "Please add your JSONBin.io Master Key to enable sharing. Check the console for instructions.",
