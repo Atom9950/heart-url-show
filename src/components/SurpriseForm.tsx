@@ -140,7 +140,7 @@ export const SurpriseForm = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$xSEsVHZ2e.njkuRkHeo.2.GRSxo07BX5dyxn1p7LeVTc.k7ZGjfYy' // You'll need to get a free API key
+          'X-Master-Key': '$2a$10$vIjUvIrwvsih/ZRLHvMBw.olVi5byAdAl84xw0QTv1BmF4M2DoUo2' // You'll need to get a free API key
         },
         body: JSON.stringify(surpriseData)
       });
