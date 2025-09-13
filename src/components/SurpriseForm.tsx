@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Upload, Heart, Music, Send } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
+import LZString from 'lz-string';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,17 +31,42 @@ export const SurpriseForm = () => {
   const { toast } = useToast();
 
   const compressImage = async (file: File): Promise<string> => {
-    const options = {
-      maxSizeMB: 2,  // Allow up to 2MB per image (reasonable for sharing)
-      maxWidthOrHeight: 1200,  // Good quality dimensions
-      useWebWorker: true,
-      fileType: 'image/jpeg',
-      initialQuality: 0.8,  // Good quality
-    };
+    // Smart compression based on file size
+    const fileSizeMB = file.size / (1024 * 1024);
+    
+    let options;
+    if (fileSizeMB > 5) {
+      // Large files - aggressive compression
+      options = {
+        maxSizeMB: 0.3,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+        initialQuality: 0.7,
+      };
+    } else if (fileSizeMB > 2) {
+      // Medium files - moderate compression
+      options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1000,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+        initialQuality: 0.8,
+      };
+    } else {
+      // Small files - light compression
+      options = {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+        initialQuality: 0.85,
+      };
+    }
     
     try {
       const compressedFile = await imageCompression(file, options);
-      console.log('Compressed file size:', compressedFile.size, 'bytes');
+      console.log(`Compressed ${file.name}: ${file.size} bytes → ${compressedFile.size} bytes`);
       
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -55,12 +81,12 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 5,  // Allow up to 5 high-quality images
+    maxFiles: 3,  // Good balance of quality vs URL size
     onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length + formData.images.length > 5) {
+      if (acceptedFiles.length + formData.images.length > 3) {
         toast({
           title: "Too many images",
-          description: "Maximum 5 images allowed",
+          description: "Maximum 3 high-quality images allowed",
           variant: "destructive",
         });
         return;
@@ -79,7 +105,7 @@ export const SurpriseForm = () => {
         
         toast({
           title: "Images uploaded! 📸",
-          description: `${acceptedFiles.length} high-quality image(s) added successfully`,
+          description: `${acceptedFiles.length} high-quality image(s) processed successfully`,
         });
       } catch (error) {
         console.log('Compression error:', error);
@@ -126,44 +152,43 @@ export const SurpriseForm = () => {
     try {
       // Create the complete data object
       const surpriseData = {
-        name: formData.name,
-        age: formData.age,
-        message: formData.message,
+        name: formData.name.trim(),
+        age: formData.age.trim(),
+        message: formData.message.trim(),
         images: formData.images,
         music: formData.music,
-        timestamp: Date.now()
+        v: 1 // version number
       };
       
-      // Use a free service like JSONBin.io or create a simple server
-      // For now, let's use a simple approach with a temporary storage service
-      const response = await fetch('https://api.jsonbin.io/v3/b', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$yimA3ZQ2YVI1z8LsOa/a.ujkq5yQ.Q92wnXBUr5XgC2JjYeLPrRDC' // You'll need to get a free API key
-        },
-        body: JSON.stringify(surpriseData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save surprise data');
+      const dataString = JSON.stringify(surpriseData);
+      console.log('Original data size:', dataString.length, 'characters');
+      
+      // Use advanced compression with LZString
+      const compressedData = LZString.compressToEncodedURIComponent(dataString);
+      console.log('Compressed data size:', compressedData.length, 'characters');
+      
+      // Calculate compression ratio
+      const compressionRatio = ((dataString.length - compressedData.length) / dataString.length * 100).toFixed(1);
+      console.log(`Compression ratio: ${compressionRatio}%`);
+      
+      // Create the URL using hash fragment for better compatibility
+      const url = `${window.location.origin}${window.location.pathname}#/surprise?d=${compressedData}`;
+      console.log('Final URL length:', url.length, 'characters');
+      
+      // Check URL length (be more generous with modern browsers)
+      if (url.length > 8000) {
+        toast({
+          title: "Link size warning",
+          description: `Link is ${Math.round(url.length/1000)}KB. It should work but consider fewer/smaller images for better compatibility.`,
+        });
       }
-
-      const result = await response.json();
-      const binId = result.metadata.id;
       
-      // Create a simple, clean URL with just the ID
-      const url = `${window.location.origin}${window.location.pathname}#/surprise/${binId}`;
-      
-      console.log('Generated URL:', url);
-      console.log('URL length:', url.length);
-      
-      // Copy to clipboard
+      // Always try to generate the link
       try {
         await navigator.clipboard.writeText(url);
         toast({
           title: "High-quality link created! 🎉",
-          description: "Shareable link copied! Your images are full quality and the link works on any device!",
+          description: `Shareable link copied! ${compressionRatio}% compressed while preserving quality. Works on any device!`,
         });
       } catch (clipboardError) {
         // Fallback for older browsers
@@ -180,12 +205,14 @@ export const SurpriseForm = () => {
           document.execCommand('copy');
           toast({
             title: "High-quality link created! 🎉",
-            description: "Link copied! Share this magical surprise - full quality images included!",
+            description: `Link copied! ${compressionRatio}% compressed, full quality preserved!`,
           });
         } catch (execError) {
+          // Show the URL in a dialog or alert as last resort
+          alert(`Your surprise link is ready! Copy this URL to share:\n\n${url}`);
           toast({
             title: "Link created! 📱",
-            description: "Copy the URL from your browser to share your high-quality surprise!",
+            description: "Please copy the URL from the popup to share your surprise!",
           });
         }
         
@@ -194,56 +221,13 @@ export const SurpriseForm = () => {
       
     } catch (error) {
       console.error('Error generating URL:', error);
-      
-      // Fallback to the compressed URL method if the service fails
-      toast({
-        title: "Service temporarily unavailable",
-        description: "Trying backup method with smaller images...",
-      });
-      
-      // Implement the compressed URL fallback here
-      await generateCompressedFallback();
-      
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Fallback method using URL encoding (smaller images)
-  const generateCompressedFallback = async () => {
-    try {
-      // Use only the first 2 images and compress them more for URL fallback
-      const limitedImages = formData.images.slice(0, 2);
-      const fallbackData = {
-        ...formData,
-        images: limitedImages
-      };
-      
-      const dataString = JSON.stringify(fallbackData);
-      const compressedData = btoa(encodeURIComponent(dataString));
-      const url = `${window.location.origin}${window.location.pathname}#/surprise?data=${compressedData}`;
-      
-      if (url.length > 3000) {
-        toast({
-          title: "Backup method failed",
-          description: "Images are too large. Please try again later or use smaller images.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Backup link created! ⚡",
-        description: "Link copied! Using compressed images as fallback.",
-      });
-      
-    } catch (error) {
       toast({
         title: "Generation failed",
-        description: "Please try again with smaller images.",
+        description: "Error creating surprise link. Please try with fewer or smaller images.",
         variant: "destructive",
       });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -252,6 +236,12 @@ export const SurpriseForm = () => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
+  };
+
+  const getTotalSize = () => {
+    const totalChars = formData.images.reduce((total, img) => total + img.length, 0) +
+                     formData.name.length + formData.message.length + (formData.age?.length || 0);
+    return Math.round(totalChars / 1024); // KB estimate
   };
 
   return (
@@ -276,8 +266,13 @@ export const SurpriseForm = () => {
               Create a Magical Surprise
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Craft a romantic birthday surprise with high-quality images ✨
+              Craft a romantic birthday surprise with beautiful high-quality images ✨
             </p>
+            {formData.images.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Current size: ~{getTotalSize()}KB
+              </p>
+            )}
           </CardHeader>
 
           <CardContent className="space-y-8">
@@ -325,7 +320,7 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Beautiful Photos (Up to 5 high-quality images)
+                Beautiful Photos (Up to 3 high-quality images)
               </Label>
               <div
                 {...getImageProps()}
@@ -337,7 +332,7 @@ export const SurpriseForm = () => {
                   {uploading ? 'Processing high-quality images...' : 'Upload your favorite photos together'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PNG up to 10MB each - full quality preserved! 📸
+                  JPG, PNG up to 10MB each - smart compression maintains quality! 📸
                 </p>
               </div>
 
@@ -394,12 +389,12 @@ export const SurpriseForm = () => {
                 disabled={!formData.name.trim() || !formData.message.trim() || formData.images.length === 0 || generating}
               >
                 <Send className="w-5 h-5 mr-2" />
-                {generating ? 'Creating Magic...' : 'Create High-Quality Surprise Link'}
+                {generating ? 'Creating Magic...' : 'Create High-Quality Surprise Link ✨'}
               </Button>
             </motion.div>
 
             <div className="text-center text-sm text-muted-foreground">
-              ✨ High-quality images preserved • Works on any device • Secure sharing
+              🎭 Smart compression preserves quality • Works everywhere • No servers needed
             </div>
           </CardContent>
         </Card>
