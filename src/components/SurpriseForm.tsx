@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Upload, Heart, Music, Send } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
+import LZString from 'lz-string';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,22 +27,19 @@ export const SurpriseForm = () => {
     images: [],
   });
   const [uploading, setUploading] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 2,  // Allow up to 2MB per image (reasonable for sharing)
-      maxWidthOrHeight: 1200,  // Good quality dimensions
+      maxSizeMB: 0.2,  // Reduced further
+      maxWidthOrHeight: 500,  // Reduced further
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.8,  // Good quality
+      initialQuality: 0.7,  // Reduced quality
     };
     
     try {
       const compressedFile = await imageCompression(file, options);
-      console.log('Compressed file size:', compressedFile.size, 'bytes');
-      
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -55,7 +53,7 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 5,  // Allow up to 5 high-quality images
+    maxFiles: 5,  // Reduced from 10 to 5
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length + formData.images.length > 5) {
         toast({
@@ -71,21 +69,18 @@ export const SurpriseForm = () => {
         const compressedImages = await Promise.all(
           acceptedFiles.map(compressImage)
         );
-        
         setFormData(prev => ({
           ...prev,
           images: [...prev.images, ...compressedImages],
         }));
-        
         toast({
-          title: "Images uploaded! 📸",
-          description: `${acceptedFiles.length} high-quality image(s) added successfully`,
+          title: "Images uploaded",
+          description: `${acceptedFiles.length} image(s) added successfully`,
         });
       } catch (error) {
-        console.log('Compression error:', error);
         toast({
           title: "Upload failed",
-          description: "Failed to process images. Please try again.",
+          description: "Failed to process images",
           variant: "destructive",
         });
       } finally {
@@ -99,19 +94,23 @@ export const SurpriseForm = () => {
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          music: acceptedFiles[0].name,
-        }));
-        toast({
-          title: "Music added! 🎵",
-          description: "Background music name saved",
-        });
+        const reader = new FileReader();
+        reader.onload = () => {
+          setFormData(prev => ({
+            ...prev,
+            music: reader.result as string,
+          }));
+          toast({
+            title: "Music uploaded",
+            description: "Background music added successfully",
+          });
+        };
+        reader.readAsDataURL(acceptedFiles[0]);
       }
     },
   });
 
-  const generateSurpriseUrl = async () => {
+  const generateSurpriseUrl = () => {
     if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
       toast({
         title: "Missing information",
@@ -121,127 +120,48 @@ export const SurpriseForm = () => {
       return;
     }
 
-    setGenerating(true);
-
     try {
-      // Create the complete data object
-      const surpriseData = {
-        name: formData.name,
-        age: formData.age,
-        message: formData.message,
-        images: formData.images,
-        music: formData.music,
-        timestamp: Date.now()
-      };
+      const dataString = JSON.stringify(formData);
+      console.log('Original data size:', dataString.length, 'characters');
       
-      // Use a free service like JSONBin.io or create a simple server
-      // For now, let's use a simple approach with a temporary storage service
-      const response = await fetch('https://api.jsonbin.io/v3/b', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$vIjUvIrwvsih/ZRLHvMBw.olVi5byAdAl84xw0QTv1BmF4M2DoUo2' // You'll need to get a free API key
-        },
-        body: JSON.stringify(surpriseData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save surprise data');
-      }
-
-      const result = await response.json();
-      const binId = result.metadata.id;
+      // Generate a unique ID for this surprise
+      const surpriseId = Date.now().toString(36) + Math.random().toString(36).substr(2);
       
-      // Create a simple, clean URL with just the ID
-      const url = `${window.location.origin}${window.location.pathname}#/surprise/${binId}`;
+      // Store the data in localStorage
+      localStorage.setItem(`surprise_${surpriseId}`, dataString);
       
-      console.log('Generated URL:', url);
-      console.log('URL length:', url.length);
+      // Set expiration (24 hours)
+      localStorage.setItem(`surprise_expiry_${surpriseId}`, (Date.now() + 24 * 60 * 60 * 1000).toString());
       
-      // Copy to clipboard
-      try {
-        await navigator.clipboard.writeText(url);
+      // Create the URL with just the ID
+      const url = `${window.location.origin}/#/surprise?id=${surpriseId}`;
+      console.log('Final URL length:', url.length, 'characters');
+      console.log('Final URL:', url);
+      
+      navigator.clipboard.writeText(url).then(() => {
         toast({
-          title: "High-quality link created! 🎉",
-          description: "Shareable link copied! Your images are full quality and the link works on any device!",
+          title: "Link copied!",
+          description: "Share this magical surprise link with your loved one",
         });
-      } catch (clipboardError) {
-        // Fallback for older browsers
+      }).catch(() => {
+        // Fallback if clipboard API fails
         const textArea = document.createElement('textarea');
         textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
         document.body.appendChild(textArea);
-        textArea.focus();
         textArea.select();
-        
-        try {
-          document.execCommand('copy');
-          toast({
-            title: "High-quality link created! 🎉",
-            description: "Link copied! Share this magical surprise - full quality images included!",
-          });
-        } catch (execError) {
-          toast({
-            title: "Link created! 📱",
-            description: "Copy the URL from your browser to share your high-quality surprise!",
-          });
-        }
-        
+        document.execCommand('copy');
         document.body.removeChild(textArea);
-      }
-      
+        
+        toast({
+          title: "Link generated!",
+          description: "Copy the URL from your browser address bar",
+        });
+      });
     } catch (error) {
       console.error('Error generating URL:', error);
-      
-      // Fallback to the compressed URL method if the service fails
-      toast({
-        title: "Service temporarily unavailable",
-        description: "Trying backup method with smaller images...",
-      });
-      
-      // Implement the compressed URL fallback here
-      await generateCompressedFallback();
-      
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Fallback method using URL encoding (smaller images)
-  const generateCompressedFallback = async () => {
-    try {
-      // Use only the first 2 images and compress them more for URL fallback
-      const limitedImages = formData.images.slice(0, 2);
-      const fallbackData = {
-        ...formData,
-        images: limitedImages
-      };
-      
-      const dataString = JSON.stringify(fallbackData);
-      const compressedData = btoa(encodeURIComponent(dataString));
-      const url = `${window.location.origin}${window.location.pathname}#/surprise?data=${compressedData}`;
-      
-      if (url.length > 3000) {
-        toast({
-          title: "Backup method failed",
-          description: "Images are too large. Please try again later or use smaller images.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Backup link created! ⚡",
-        description: "Link copied! Using compressed images as fallback.",
-      });
-      
-    } catch (error) {
       toast({
         title: "Generation failed",
-        description: "Please try again with smaller images.",
+        description: "Failed to create surprise link. Try using fewer or smaller images.",
         variant: "destructive",
       });
     }
@@ -276,7 +196,7 @@ export const SurpriseForm = () => {
               Create a Magical Surprise
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Craft a romantic birthday surprise with high-quality images ✨
+              Craft a romantic birthday surprise that will make their heart flutter
             </p>
           </CardHeader>
 
@@ -325,7 +245,7 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Beautiful Photos (Up to 5 high-quality images)
+                Romantic Photos (Up to 5)
               </Label>
               <div
                 {...getImageProps()}
@@ -334,15 +254,15 @@ export const SurpriseForm = () => {
                 <input {...getImageInputProps()} />
                 <Upload className="w-8 h-8 text-rose mx-auto mb-4" />
                 <p className="text-foreground mb-2">
-                  {uploading ? 'Processing high-quality images...' : 'Upload your favorite photos together'}
+                  {uploading ? 'Processing images...' : 'Drag & drop your favorite photos together'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PNG up to 10MB each - full quality preserved! 📸
+                  JPG, PNG up to 20MB each
                 </p>
               </div>
 
               {formData.images.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-4 gap-4 mt-4">
                   {formData.images.map((image, index) => (
                     <motion.div
                       key={index}
@@ -353,7 +273,7 @@ export const SurpriseForm = () => {
                       <img
                         src={image}
                         alt={`Upload ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg"
+                        className="w-full h-20 object-cover rounded-lg"
                       />
                       <button
                         onClick={() => removeImage(index)}
@@ -378,7 +298,7 @@ export const SurpriseForm = () => {
                 <input {...getMusicInputProps()} />
                 <Music className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-foreground text-sm">
-                  {formData.music ? `Music: ${formData.music} ✨` : 'Add a romantic song name'}
+                  {formData.music ? 'Music uploaded ✨' : 'Add a romantic song'}
                 </p>
               </div>
             </div>
@@ -391,16 +311,12 @@ export const SurpriseForm = () => {
               <Button
                 onClick={generateSurpriseUrl}
                 className="w-full romantic-button py-6 text-lg font-semibold"
-                disabled={!formData.name.trim() || !formData.message.trim() || formData.images.length === 0 || generating}
+                disabled={!formData.name.trim() || !formData.message.trim() || formData.images.length === 0}
               >
                 <Send className="w-5 h-5 mr-2" />
-                {generating ? 'Creating Magic...' : 'Create High-Quality Surprise Link'}
+                Create Magical Surprise Link
               </Button>
             </motion.div>
-
-            <div className="text-center text-sm text-muted-foreground">
-              ✨ High-quality images preserved • Works on any device • Secure sharing
-            </div>
           </CardContent>
         </Card>
       </motion.div>

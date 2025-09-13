@@ -20,133 +20,64 @@ export const SurpriseViewer = () => {
   const [surpriseData, setSurpriseData] = useState<SurpriseData | null>(null);
   const [currentPhase, setCurrentPhase] = useState<'intro' | 'birthday' | 'complete'>('intro');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadSurpriseData = async () => {
-      try {
-        setLoading(true);
-        
-        // Check if it's a service-based URL (with ID)
-        const pathMatch = window.location.hash.match(/#\/surprise\/(.+)/);
-        if (pathMatch) {
-          const binId = pathMatch[1];
-          await loadFromService(binId);
-          return;
-        }
-        
-        // Fallback to compressed URL method
-        let compressedData = null;
-        
-        // Check hash-based URL first (for HashRouter)
-        if (window.location.hash) {
-          const hashParts = window.location.hash.split('?');
-          if (hashParts.length > 1) {
-            const hashParams = new URLSearchParams(hashParts[1]);
-            compressedData = hashParams.get('data');
-          }
-        }
-        
-        // Fallback to regular search params
-        if (!compressedData) {
-          compressedData = searchParams.get('data');
-        }
-        
-        if (compressedData) {
-          await loadFromCompressedData(compressedData);
-        } else {
-          setError('No surprise data found in the URL. The link may be incomplete.');
-        }
-        
-      } catch (err) {
-        console.error('Error loading surprise data:', err);
-        setError(`Failed to load surprise: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      } finally {
-        setLoading(false);
-      }
-    };
+// In your SurpriseViewer component
+useEffect(() => {
+  // For HashRouter, we need to handle the hash portion
+  let surpriseId = null;
+  
+  // Check if we're in a hash URL
+  if (window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    surpriseId = hashParams.get('id');
+  }
+  
+  console.log('Surprise ID:', surpriseId);
+  console.log('Full URL:', window.location.href);
+  console.log('Hash:', window.location.hash);
+  
+  if (!surpriseId) {
+    setError('No surprise ID found in the URL');
+    return;
+  }
 
-    const loadFromService = async (binId: string) => {
-      try {
-        console.log('Loading from service with ID:', binId);
-        
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-          headers: {
-            'X-Master-Key': '$2a$10$vIjUvIrwvsih/ZRLHvMBw.olVi5byAdAl84xw0QTv1BmF4M2DoUo2' // You'll need to get a free API key
-          }
-        });
+  try {
+    // Check if the surprise has expired
+    const expiry = localStorage.getItem(`surprise_expiry_${surpriseId}`);
+    if (!expiry || Date.now() > parseInt(expiry)) {
+      setError('This surprise link has expired or is invalid');
+      return;
+    }
 
-        if (!response.ok) {
-          throw new Error(`Service error: ${response.status}`);
-        }
+    // Retrieve the data from localStorage
+    const dataString = localStorage.getItem(`surprise_${surpriseId}`);
+    console.log('Retrieved data size:', dataString?.length || 0);
+    
+    if (!dataString) {
+      setError('Surprise data not found - the link may be expired or invalid');
+      return;
+    }
 
-        const result = await response.json();
-        const parsed = result.record;
-        
-        console.log('Loaded high-quality surprise data:', {
-          name: parsed.name,
-          imageCount: parsed.images?.length || 0,
-          hasMessage: !!parsed.message,
-          hasMusic: !!parsed.music
-        });
-        
-        // Validate required fields
-        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-          throw new Error('The surprise data is incomplete.');
-        }
+    console.log('Parsing JSON data...');
+    const parsed = JSON.parse(dataString) as SurpriseData;
+    console.log('Parsed data:', {
+      name: parsed.name,
+      imageCount: parsed.images?.length || 0,
+      hasMessage: !!parsed.message,
+      hasMusic: !!parsed.music
+    });
+    
+    if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+      setError('Invalid surprise data format - missing required fields');
+      return;
+    }
 
-        setSurpriseData(parsed);
-        
-      } catch (error) {
-        console.error('Service loading failed:', error);
-        setError('Failed to load the surprise. The link may be expired or invalid.');
-      }
-    };
-
-    const loadFromCompressedData = async (compressedData: string) => {
-      try {
-        console.log('Loading from compressed data, length:', compressedData.length);
-        
-        // Try LZString decompression first
-        let decompressedData;
-        try {
-          decompressedData = LZString.decompressFromEncodedURIComponent(compressedData);
-        } catch {
-          // Fallback to base64 decoding
-          decompressedData = decodeURIComponent(atob(compressedData));
-        }
-        
-        if (!decompressedData) {
-          throw new Error('Failed to decode the surprise data.');
-        }
-        
-        const parsed = JSON.parse(decompressedData) as SurpriseData;
-        
-        // Validate required fields
-        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-          throw new Error('The surprise data is incomplete.');
-        }
-
-        // Validate image data
-        const validImages = parsed.images.filter(img => 
-          typeof img === 'string' && img.startsWith('data:image/')
-        );
-        
-        if (validImages.length === 0) {
-          throw new Error('No valid images found in the surprise data.');
-        }
-
-        parsed.images = validImages;
-        setSurpriseData(parsed);
-        
-      } catch (error) {
-        console.error('Compressed data loading failed:', error);
-        setError('The surprise link appears to be corrupted or invalid.');
-      }
-    };
-
-    loadSurpriseData();
-  }, [searchParams]);
+    setSurpriseData(parsed);
+  } catch (err) {
+    console.error('Error parsing surprise data:', err);
+    setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  }
+}, [searchParams]);
 
   const handleIntroComplete = () => {
     setCurrentPhase('birthday');
@@ -160,23 +91,6 @@ export const SurpriseViewer = () => {
     setCurrentPhase('intro');
   };
 
-  const handleCreateNew = () => {
-    // Navigate to home page
-    window.location.href = window.location.origin + window.location.pathname;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
-        <div className="text-center">
-          <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
-          <p className="text-foreground text-xl">Loading your magical surprise...</p>
-          <p className="text-muted-foreground text-sm mt-2">Preparing something special ✨</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center p-4">
@@ -186,21 +100,16 @@ export const SurpriseViewer = () => {
             <h2 className="text-xl font-bold text-foreground mb-4">
               Oops! Something went wrong
             </h2>
-            <p className="text-muted-foreground mb-6 text-sm">
+            <p className="text-muted-foreground mb-6">
               {error}
             </p>
-            <div className="space-y-3">
-              <Button
-                onClick={handleCreateNew}
-                className="w-full romantic-button"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Create a New Surprise
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                💡 Tip: Make sure you copied the complete link!
-              </p>
-            </div>
+            <Button
+              onClick={() => window.location.href = '/'}
+              className="romantic-button"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Create a New Surprise
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -209,25 +118,11 @@ export const SurpriseViewer = () => {
 
   if (!surpriseData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto bg-card/80 backdrop-blur-sm border-rose/20">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">🎁</div>
-            <h2 className="text-xl font-bold text-foreground mb-4">
-              No surprise found
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              This link doesn't contain any surprise data.
-            </p>
-            <Button
-              onClick={handleCreateNew}
-              className="w-full romantic-button"
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              Create a Magical Surprise
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
+        <div className="text-center">
+          <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
+          <p className="text-foreground text-xl">Loading your magical surprise...</p>
+        </div>
       </div>
     );
   }
@@ -274,7 +169,7 @@ export const SurpriseViewer = () => {
               🔄 Experience Again
             </Button>
             <Button
-              onClick={handleCreateNew}
+              onClick={() => window.location.href = '/'}
               variant="outline"
               className="w-full border-rose/30 hover:border-rose/50"
             >
@@ -282,9 +177,6 @@ export const SurpriseViewer = () => {
               Create Another Surprise
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-6">
-            💡 Share this link with anyone - it works on all devices!
-          </p>
         </CardContent>
       </Card>
     </div>
