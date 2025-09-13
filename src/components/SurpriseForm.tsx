@@ -19,41 +19,6 @@ interface FormData {
   music?: string;
 }
 
-// IndexedDB utility functions
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('SurpriseAppDB', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('surprises')) {
-        db.createObjectStore('surprises', { keyPath: 'id' });
-      }
-    };
-  });
-};
-
-const storeSurpriseData = async (id: string, data: string): Promise<void> => {
-  try {
-    const db = await openDB();
-    const transaction = db.transaction('surprises', 'readwrite');
-    const store = transaction.objectStore('surprises');
-    
-    return new Promise((resolve, reject) => {
-      const request = store.put({ id, data, timestamp: Date.now() });
-      
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Error storing data in IndexedDB:', error);
-    throw error;
-  }
-};
-
 export const SurpriseForm = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -66,11 +31,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.1,  // Reduced even further
-      maxWidthOrHeight: 400,  // Reduced even further
+      maxSizeMB: 0.1,
+      maxWidthOrHeight: 400,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.6,  // Reduced quality even more
+      initialQuality: 0.6,
     };
     
     try {
@@ -88,7 +53,7 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 3,  // Reduced to 3 images
+    maxFiles: 3,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length + formData.images.length > 3) {
         toast({
@@ -132,7 +97,7 @@ export const SurpriseForm = () => {
         // Don't store music as data URL, just store the file name
         setFormData(prev => ({
           ...prev,
-          music: acceptedFiles[0].name, // Store only the file name
+          music: acceptedFiles[0].name,
         }));
         toast({
           title: "Music uploaded",
@@ -142,7 +107,7 @@ export const SurpriseForm = () => {
     },
   });
 
-  const generateSurpriseUrl = async () => {
+  const generateSurpriseUrl = () => {
     if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
       toast({
         title: "Missing information",
@@ -156,21 +121,31 @@ export const SurpriseForm = () => {
       // Create a simplified version without music data URLs
       const dataToStore = {
         ...formData,
-        music: formData.music ? 'has_music' : undefined // Don't store actual music data
+        music: formData.music ? 'has_music' : undefined
       };
       
       const dataString = JSON.stringify(dataToStore);
-      console.log('Data size to store:', dataString.length, 'characters');
+      console.log('Original data size:', dataString.length, 'characters');
       
-      // Generate a unique ID for this surprise
-      const surpriseId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      // Use more efficient compression with URI encoding
+      const compressed = LZString.compressToEncodedURIComponent(dataString);
+      console.log('Compressed data size:', compressed.length, 'characters');
       
-      // Store the data in IndexedDB
-      await storeSurpriseData(surpriseId, dataString);
+      // Check if URL will be too long
+      const estimatedUrlLength = `${window.location.origin}/#/surprise?data=${compressed}`.length;
+      console.log('Estimated URL length:', estimatedUrlLength);
       
-      // Create the URL with just the ID
-      const url = `${window.location.origin}/#/surprise?id=${surpriseId}`;
-      console.log('Final URL length:', url.length, 'characters');
+      if (estimatedUrlLength > 2000) { // Most browsers support up to 2000 chars
+        toast({
+          title: "Data too large",
+          description: "Please reduce the number of images or use smaller images",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create the URL with compressed data
+      const url = `${window.location.origin}/#/surprise?data=${compressed}`;
       console.log('Final URL:', url);
       
       navigator.clipboard.writeText(url).then(() => {
@@ -282,6 +257,9 @@ export const SurpriseForm = () => {
               <Label className="text-foreground font-medium">
                 Romantic Photos (Up to 3)
               </Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Use small images for shareable links
+              </p>
               <div
                 {...getImageProps()}
                 className="mt-2 border-2 border-dashed border-rose/30 rounded-lg p-8 text-center cursor-pointer hover:border-rose/50 transition-colors bg-input/50 hover:scale-105 transform duration-200"

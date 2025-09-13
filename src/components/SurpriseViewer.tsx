@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import LZString from 'lz-string';
 import { RomanticIntro } from './RomanticIntro';
 import { BirthdaySequence } from './BirthdaySequence';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,58 +15,6 @@ interface SurpriseData {
   music?: string;
 }
 
-// IndexedDB utility functions
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('SurpriseAppDB', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('surprises')) {
-        db.createObjectStore('surprises', { keyPath: 'id' });
-      }
-    };
-  });
-};
-
-const getSurpriseData = async (id: string): Promise<string | null> => {
-  try {
-    const db = await openDB();
-    const transaction = db.transaction('surprises', 'readonly');
-    const store = transaction.objectStore('surprises');
-    
-    return new Promise((resolve, reject) => {
-      const request = store.get(id);
-      
-      request.onsuccess = () => {
-        if (request.result) {
-          // Check if data is expired (older than 24 hours)
-          const isExpired = Date.now() - request.result.timestamp > 24 * 60 * 60 * 1000;
-          if (isExpired) {
-            // Clean up expired data
-            const deleteTransaction = db.transaction('surprises', 'readwrite');
-            const deleteStore = deleteTransaction.objectStore('surprises');
-            deleteStore.delete(id);
-            resolve(null);
-          } else {
-            resolve(request.result.data);
-          }
-        } else {
-          resolve(null);
-        }
-      };
-      
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Error retrieving data from IndexedDB:', error);
-    return null;
-  }
-};
-
 export const SurpriseViewer = () => {
   const [searchParams] = useSearchParams();
   const [surpriseData, setSurpriseData] = useState<SurpriseData | null>(null);
@@ -73,57 +22,54 @@ export const SurpriseViewer = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadSurpriseData = async () => {
-      // For HashRouter, we need to handle the hash portion
-      let surpriseId = null;
+    // For HashRouter, we need to handle the hash portion
+    let dataParam = null;
+    
+    // Check if we're in a hash URL
+    if (window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      dataParam = hashParams.get('data');
+    }
+    
+    console.log('URL data parameter length:', dataParam?.length || 0);
+    console.log('Full URL:', window.location.href);
+    console.log('Hash:', window.location.hash);
+    
+    if (!dataParam) {
+      setError('No surprise data found in the URL');
+      return;
+    }
+
+    try {
+      console.log('Attempting to decompress data...');
+      const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
+      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
       
-      // Check if we're in a hash URL
-      if (window.location.hash) {
-        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-        surpriseId = hashParams.get('id');
-      }
-      
-      console.log('Surprise ID:', surpriseId);
-      console.log('Full URL:', window.location.href);
-      console.log('Hash:', window.location.hash);
-      
-      if (!surpriseId) {
-        setError('No surprise ID found in the URL');
+      if (!decompressed) {
+        console.error('LZString decompression returned null/empty');
+        setError('Failed to decompress surprise data - the link may be corrupted or too large');
         return;
       }
 
-      try {
-        // Retrieve the data from IndexedDB
-        const dataString = await getSurpriseData(surpriseId);
-        console.log('Retrieved data size:', dataString?.length || 0);
-        
-        if (!dataString) {
-          setError('Surprise data not found - the link may be expired or invalid');
-          return;
-        }
-
-        console.log('Parsing JSON data...');
-        const parsed = JSON.parse(dataString) as SurpriseData;
-        console.log('Parsed data:', {
-          name: parsed.name,
-          imageCount: parsed.images?.length || 0,
-          hasMessage: !!parsed.message,
-          hasMusic: !!parsed.music
-        });
-        
-        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-          setError('Invalid surprise data format - missing required fields');
-          return;
-        }
-
-        setSurpriseData(parsed);
-      } catch (err) {
-        console.error('Error parsing surprise data:', err);
-        setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.log('Parsing JSON data...');
+      const parsed = JSON.parse(decompressed) as SurpriseData;
+      console.log('Parsed data:', {
+        name: parsed.name,
+        imageCount: parsed.images?.length || 0,
+        hasMessage: !!parsed.message,
+        hasMusic: !!parsed.music
+      });
+      
+      if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+        setError('Invalid surprise data format - missing required fields');
+        return;
       }
-    };
 
-    loadSurpriseData();
+      setSurpriseData(parsed);
+    } catch (err) {
+      console.error('Error parsing surprise data:', err);
+      setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   }, [searchParams]);
 
   const handleIntroComplete = () => {
