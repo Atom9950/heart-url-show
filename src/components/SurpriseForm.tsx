@@ -31,11 +31,11 @@ export const SurpriseForm = () => {
 
   const compressImage = async (file: File): Promise<string> => {
     const options = {
-      maxSizeMB: 0.1,
-      maxWidthOrHeight: 400,
+      maxSizeMB: 0.05,  // Even more aggressive compression for URL sharing
+      maxWidthOrHeight: 300,  // Smaller dimensions
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.6,
+      initialQuality: 0.4,  // Lower quality for smaller size
     };
     
     try {
@@ -53,12 +53,12 @@ export const SurpriseForm = () => {
 
   const { getRootProps: getImageProps, getInputProps: getImageInputProps } = useDropzone({
     accept: { 'image/*': [] },
-    maxFiles: 3,
+    maxFiles: 2,  // Reduced to 2 images for URL size
     onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length + formData.images.length > 3) {
+      if (acceptedFiles.length + formData.images.length > 2) {
         toast({
           title: "Too many images",
-          description: "Maximum 3 images allowed",
+          description: "Maximum 2 images allowed for shareable links",
           variant: "destructive",
         });
         return;
@@ -94,20 +94,20 @@ export const SurpriseForm = () => {
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        // Don't store music as data URL, just store the file name
+        // Store only the file name for music
         setFormData(prev => ({
           ...prev,
           music: acceptedFiles[0].name,
         }));
         toast({
-          title: "Music uploaded",
-          description: "Background music added successfully (note: music files are not stored for sharing)",
+          title: "Music noted",
+          description: "Background music name saved (audio files cannot be shared via URL)",
         });
       }
     },
   });
 
-  const generateSurpriseUrl = () => {
+  const generateSurpriseUrl = async () => {
     if (!formData.name.trim() || !formData.message.trim() || formData.images.length === 0) {
       toast({
         title: "Missing information",
@@ -118,60 +118,72 @@ export const SurpriseForm = () => {
     }
 
     try {
-      // Create a simplified version without music data URLs
-      const dataToStore = {
+      // Create the data object without music files (only name)
+      const dataToEncode = {
         ...formData,
-        music: formData.music ? 'has_music' : undefined
+        music: formData.music ? formData.music : undefined
       };
       
-      const dataString = JSON.stringify(dataToStore);
+      const dataString = JSON.stringify(dataToEncode);
       console.log('Original data size:', dataString.length, 'characters');
       
-      // Use more efficient compression with URI encoding
-      const compressed = LZString.compressToEncodedURIComponent(dataString);
-      console.log('Compressed data size:', compressed.length, 'characters');
+      // Compress the data using LZString
+      const compressedData = LZString.compressToEncodedURIComponent(dataString);
+      console.log('Compressed data size:', compressedData.length, 'characters');
       
-      // Check if URL will be too long
-      const estimatedUrlLength = `${window.location.origin}/#/surprise?data=${compressed}`.length;
-      console.log('Estimated URL length:', estimatedUrlLength);
+      // Create the shareable URL
+      const url = `${window.location.origin}${window.location.pathname}#/surprise?data=${compressedData}`;
+      console.log('Final URL length:', url.length, 'characters');
       
-      if (estimatedUrlLength > 2000) { // Most browsers support up to 2000 chars
+      // Check if URL is too long (most browsers support ~2000 chars)
+      if (url.length > 8000) {
         toast({
-          title: "Data too large",
-          description: "Please reduce the number of images or use smaller images",
+          title: "Link too large",
+          description: "Please use smaller images or fewer images to create a shareable link",
           variant: "destructive",
         });
         return;
       }
       
-      // Create the URL with compressed data
-      const url = `${window.location.origin}/#/surprise?data=${compressed}`;
-      console.log('Final URL:', url);
-      
-      navigator.clipboard.writeText(url).then(() => {
+      // Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
         toast({
-          title: "Link copied!",
-          description: "Share this magical surprise link with your loved one",
+          title: "Shareable link copied! 🎉",
+          description: "Share this magical surprise link with your loved one - it works on any device!",
         });
-      }).catch(() => {
-        // Fallback if clipboard API fails
+      } catch (clipboardError) {
+        // Fallback for older browsers
         const textArea = document.createElement('textarea');
         textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
         document.body.appendChild(textArea);
+        textArea.focus();
         textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
         
-        toast({
-          title: "Link generated!",
-          description: "Copy the URL from your browser address bar",
-        });
-      });
+        try {
+          document.execCommand('copy');
+          toast({
+            title: "Shareable link generated! 🎉",
+            description: "Link copied! Share this magical surprise with your loved one - it works on any device!",
+          });
+        } catch (execError) {
+          toast({
+            title: "Link generated! 📱",
+            description: "Copy the URL from your browser address bar to share",
+          });
+        }
+        
+        document.body.removeChild(textArea);
+      }
+      
     } catch (error) {
       console.error('Error generating URL:', error);
       toast({
         title: "Generation failed",
-        description: "Failed to create surprise link. Try using fewer or smaller images.",
+        description: "Failed to create surprise link. Try using smaller or fewer images.",
         variant: "destructive",
       });
     }
@@ -206,7 +218,7 @@ export const SurpriseForm = () => {
               Create a Magical Surprise
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Craft a romantic birthday surprise that will make their heart flutter
+              Craft a romantic birthday surprise that works on any device 📱💻
             </p>
           </CardHeader>
 
@@ -255,11 +267,8 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Romantic Photos (Up to 3)
+                Romantic Photos (Up to 2 for sharing)
               </Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Use small images for shareable links
-              </p>
               <div
                 {...getImageProps()}
                 className="mt-2 border-2 border-dashed border-rose/30 rounded-lg p-8 text-center cursor-pointer hover:border-rose/50 transition-colors bg-input/50 hover:scale-105 transform duration-200"
@@ -270,12 +279,12 @@ export const SurpriseForm = () => {
                   {uploading ? 'Processing images...' : 'Drag & drop your favorite photos together'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PNG up to 20MB each
+                  JPG, PNG - automatically optimized for sharing
                 </p>
               </div>
 
               {formData.images.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-2 gap-4 mt-4">
                   {formData.images.map((image, index) => (
                     <motion.div
                       key={index}
@@ -286,7 +295,7 @@ export const SurpriseForm = () => {
                       <img
                         src={image}
                         alt={`Upload ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg"
+                        className="w-full h-24 object-cover rounded-lg"
                       />
                       <button
                         onClick={() => removeImage(index)}
@@ -302,7 +311,7 @@ export const SurpriseForm = () => {
 
             <div>
               <Label className="text-foreground font-medium">
-                Background Music (Optional)
+                Background Music (Name Only)
               </Label>
               <div
                 {...getMusicProps()}
@@ -311,7 +320,10 @@ export const SurpriseForm = () => {
                 <input {...getMusicInputProps()} />
                 <Music className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-foreground text-sm">
-                  {formData.music ? 'Music uploaded ✨' : 'Add a romantic song (name only)'}
+                  {formData.music ? `Music: ${formData.music} ✨` : 'Add a romantic song name'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Note: Only song name is saved for sharing
                 </p>
               </div>
             </div>
@@ -327,9 +339,13 @@ export const SurpriseForm = () => {
                 disabled={!formData.name.trim() || !formData.message.trim() || formData.images.length === 0}
               >
                 <Send className="w-5 h-5 mr-2" />
-                Create Magical Surprise Link
+                Create Shareable Surprise Link ✨
               </Button>
             </motion.div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              💡 Your surprise will be encoded in the URL - works on any device!
+            </div>
           </CardContent>
         </Card>
       </motion.div>

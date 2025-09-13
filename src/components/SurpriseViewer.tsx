@@ -20,56 +20,93 @@ export const SurpriseViewer = () => {
   const [surpriseData, setSurpriseData] = useState<SurpriseData | null>(null);
   const [currentPhase, setCurrentPhase] = useState<'intro' | 'birthday' | 'complete'>('intro');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // For HashRouter, we need to handle the hash portion
-    let dataParam = null;
-    
-    // Check if we're in a hash URL
-    if (window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-      dataParam = hashParams.get('data');
-    }
-    
-    console.log('URL data parameter length:', dataParam?.length || 0);
-    console.log('Full URL:', window.location.href);
-    console.log('Hash:', window.location.hash);
-    
-    if (!dataParam) {
-      setError('No surprise data found in the URL');
-      return;
-    }
+    const loadSurpriseData = async () => {
+      try {
+        setLoading(true);
+        let compressedData = null;
+        
+        // Check hash-based URL first (for HashRouter)
+        if (window.location.hash) {
+          const hashParts = window.location.hash.split('?');
+          if (hashParts.length > 1) {
+            const hashParams = new URLSearchParams(hashParts[1]);
+            compressedData = hashParams.get('data');
+          }
+        }
+        
+        // Fallback to regular search params
+        if (!compressedData) {
+          compressedData = searchParams.get('data');
+        }
+        
+        console.log('Compressed data found:', !!compressedData);
+        console.log('Compressed data length:', compressedData?.length || 0);
+        
+        if (!compressedData) {
+          setError('No surprise data found in the URL. The link may be incomplete.');
+          return;
+        }
 
-    try {
-      console.log('Attempting to decompress data...');
-      const decompressed = LZString.decompressFromEncodedURIComponent(dataParam);
-      console.log('Decompression result:', decompressed ? 'Success' : 'Failed');
-      
-      if (!decompressed) {
-        console.error('LZString decompression returned null/empty');
-        setError('Failed to decompress surprise data - the link may be corrupted or too large');
-        return;
+        try {
+          // Decompress the data
+          console.log('Decompressing data...');
+          const decompressedData = LZString.decompressFromEncodedURIComponent(compressedData);
+          
+          if (!decompressedData) {
+            setError('Failed to decode the surprise data. The link may be corrupted.');
+            return;
+          }
+          
+          console.log('Decompressed data length:', decompressedData.length);
+          
+          // Parse the JSON
+          const parsed = JSON.parse(decompressedData) as SurpriseData;
+          console.log('Parsed surprise data:', {
+            name: parsed.name,
+            imageCount: parsed.images?.length || 0,
+            hasMessage: !!parsed.message,
+            hasMusic: !!parsed.music,
+            age: parsed.age
+          });
+          
+          // Validate required fields
+          if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+            setError('The surprise data is incomplete. Please check the link and try again.');
+            return;
+          }
+
+          // Validate image data
+          const validImages = parsed.images.filter(img => 
+            typeof img === 'string' && img.startsWith('data:image/')
+          );
+          
+          if (validImages.length === 0) {
+            setError('No valid images found in the surprise data.');
+            return;
+          }
+
+          // Update the parsed data with valid images only
+          parsed.images = validImages;
+          
+          setSurpriseData(parsed);
+          
+        } catch (decompressError) {
+          console.error('Error decompressing or parsing data:', decompressError);
+          setError('The surprise link appears to be corrupted or invalid. Please ask for a new link.');
+        }
+        
+      } catch (err) {
+        console.error('Error loading surprise data:', err);
+        setError(`Failed to load surprise: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      console.log('Parsing JSON data...');
-      const parsed = JSON.parse(decompressed) as SurpriseData;
-      console.log('Parsed data:', {
-        name: parsed.name,
-        imageCount: parsed.images?.length || 0,
-        hasMessage: !!parsed.message,
-        hasMusic: !!parsed.music
-      });
-      
-      if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-        setError('Invalid surprise data format - missing required fields');
-        return;
-      }
-
-      setSurpriseData(parsed);
-    } catch (err) {
-      console.error('Error parsing surprise data:', err);
-      setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
+    loadSurpriseData();
   }, [searchParams]);
 
   const handleIntroComplete = () => {
@@ -84,6 +121,23 @@ export const SurpriseViewer = () => {
     setCurrentPhase('intro');
   };
 
+  const handleCreateNew = () => {
+    // Navigate to home page
+    window.location.href = window.location.origin + window.location.pathname;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
+        <div className="text-center">
+          <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
+          <p className="text-foreground text-xl">Loading your magical surprise...</p>
+          <p className="text-muted-foreground text-sm mt-2">Preparing something special ✨</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center p-4">
@@ -93,16 +147,21 @@ export const SurpriseViewer = () => {
             <h2 className="text-xl font-bold text-foreground mb-4">
               Oops! Something went wrong
             </h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-6 text-sm">
               {error}
             </p>
-            <Button
-              onClick={() => window.location.href = '/'}
-              className="romantic-button"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Create a New Surprise
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleCreateNew}
+                className="w-full romantic-button"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Create a New Surprise
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Make sure you copied the complete link!
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -111,11 +170,25 @@ export const SurpriseViewer = () => {
 
   if (!surpriseData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
-        <div className="text-center">
-          <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
-          <p className="text-foreground text-xl">Loading your magical surprise...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center p-4">
+        <Card className="max-w-md mx-auto bg-card/80 backdrop-blur-sm border-rose/20">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">🎁</div>
+            <h2 className="text-xl font-bold text-foreground mb-4">
+              No surprise found
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              This link doesn't contain any surprise data.
+            </p>
+            <Button
+              onClick={handleCreateNew}
+              className="w-full romantic-button"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Create a Magical Surprise
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -162,7 +235,7 @@ export const SurpriseViewer = () => {
               🔄 Experience Again
             </Button>
             <Button
-              onClick={() => window.location.href = '/'}
+              onClick={handleCreateNew}
               variant="outline"
               className="w-full border-rose/30 hover:border-rose/50"
             >
@@ -170,6 +243,9 @@ export const SurpriseViewer = () => {
               Create Another Surprise
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-6">
+            💡 Share this link with anyone - it works on all devices!
+          </p>
         </CardContent>
       </Card>
     </div>
