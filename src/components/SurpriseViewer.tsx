@@ -26,6 +26,16 @@ export const SurpriseViewer = () => {
     const loadSurpriseData = async () => {
       try {
         setLoading(true);
+        
+        // Check if it's a service-based URL (with ID)
+        const pathMatch = window.location.hash.match(/#\/surprise\/(.+)/);
+        if (pathMatch) {
+          const binId = pathMatch[1];
+          await loadFromService(binId);
+          return;
+        }
+        
+        // Fallback to compressed URL method
         let compressedData = null;
         
         // Check hash-based URL first (for HashRouter)
@@ -42,60 +52,10 @@ export const SurpriseViewer = () => {
           compressedData = searchParams.get('data');
         }
         
-        console.log('Compressed data found:', !!compressedData);
-        console.log('Compressed data length:', compressedData?.length || 0);
-        
-        if (!compressedData) {
+        if (compressedData) {
+          await loadFromCompressedData(compressedData);
+        } else {
           setError('No surprise data found in the URL. The link may be incomplete.');
-          return;
-        }
-
-        try {
-          // Decompress the data
-          console.log('Decompressing data...');
-          const decompressedData = LZString.decompressFromEncodedURIComponent(compressedData);
-          
-          if (!decompressedData) {
-            setError('Failed to decode the surprise data. The link may be corrupted.');
-            return;
-          }
-          
-          console.log('Decompressed data length:', decompressedData.length);
-          
-          // Parse the JSON
-          const parsed = JSON.parse(decompressedData) as SurpriseData;
-          console.log('Parsed surprise data:', {
-            name: parsed.name,
-            imageCount: parsed.images?.length || 0,
-            hasMessage: !!parsed.message,
-            hasMusic: !!parsed.music,
-            age: parsed.age
-          });
-          
-          // Validate required fields
-          if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-            setError('The surprise data is incomplete. Please check the link and try again.');
-            return;
-          }
-
-          // Validate image data
-          const validImages = parsed.images.filter(img => 
-            typeof img === 'string' && img.startsWith('data:image/')
-          );
-          
-          if (validImages.length === 0) {
-            setError('No valid images found in the surprise data.');
-            return;
-          }
-
-          // Update the parsed data with valid images only
-          parsed.images = validImages;
-          
-          setSurpriseData(parsed);
-          
-        } catch (decompressError) {
-          console.error('Error decompressing or parsing data:', decompressError);
-          setError('The surprise link appears to be corrupted or invalid. Please ask for a new link.');
         }
         
       } catch (err) {
@@ -103,6 +63,85 @@ export const SurpriseViewer = () => {
         setError(`Failed to load surprise: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const loadFromService = async (binId: string) => {
+      try {
+        console.log('Loading from service with ID:', binId);
+        
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+          headers: {
+            'X-Master-Key': '$2a$10$CnpDhIcJledlbIYA/fiZJeGUFqUOzYBWR307SgHPzxeH7m1BTByve' // You'll need to get a free API key
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Service error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const parsed = result.record;
+        
+        console.log('Loaded high-quality surprise data:', {
+          name: parsed.name,
+          imageCount: parsed.images?.length || 0,
+          hasMessage: !!parsed.message,
+          hasMusic: !!parsed.music
+        });
+        
+        // Validate required fields
+        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+          throw new Error('The surprise data is incomplete.');
+        }
+
+        setSurpriseData(parsed);
+        
+      } catch (error) {
+        console.error('Service loading failed:', error);
+        setError('Failed to load the surprise. The link may be expired or invalid.');
+      }
+    };
+
+    const loadFromCompressedData = async (compressedData: string) => {
+      try {
+        console.log('Loading from compressed data, length:', compressedData.length);
+        
+        // Try LZString decompression first
+        let decompressedData;
+        try {
+          decompressedData = LZString.decompressFromEncodedURIComponent(compressedData);
+        } catch {
+          // Fallback to base64 decoding
+          decompressedData = decodeURIComponent(atob(compressedData));
+        }
+        
+        if (!decompressedData) {
+          throw new Error('Failed to decode the surprise data.');
+        }
+        
+        const parsed = JSON.parse(decompressedData) as SurpriseData;
+        
+        // Validate required fields
+        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+          throw new Error('The surprise data is incomplete.');
+        }
+
+        // Validate image data
+        const validImages = parsed.images.filter(img => 
+          typeof img === 'string' && img.startsWith('data:image/')
+        );
+        
+        if (validImages.length === 0) {
+          throw new Error('No valid images found in the surprise data.');
+        }
+
+        parsed.images = validImages;
+        setSurpriseData(parsed);
+        
+      } catch (error) {
+        console.error('Compressed data loading failed:', error);
+        setError('The surprise link appears to be corrupted or invalid.');
       }
     };
 
