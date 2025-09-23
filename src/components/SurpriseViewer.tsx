@@ -94,8 +94,8 @@ export const SurpriseViewer = () => {
         }
 
         try {
-          // Decode the data from the URL using the server
-          const response = await fetch(`/api/surprise?id=${surpriseId}&data=${encodeURIComponent(compressedData)}`);
+          // Decode the data from the URL using the server (no encoding needed with URL-safe base64)
+          const response = await fetch(`/api/surprise?id=${surpriseId}&data=${compressedData}`);
           
           if (!response.ok) {
             setError('Failed to decode surprise data');

@@ -179,8 +179,8 @@ export const SurpriseForm = () => {
       const surpriseId = result.id;
       const compressedData = result.compressedData;
       
-      // Create the URL with both ID and compressed data
-      const url = `${window.location.origin}/#/surprise?id=${surpriseId}&data=${encodeURIComponent(compressedData)}`;
+      // Create the URL with both ID and compressed data (no encoding needed with URL-safe base64)
+      const url = `${window.location.origin}/#/surprise?id=${surpriseId}&data=${compressedData}`;
       console.log('Final URL length:', url.length, 'characters');
       console.log('Final URL:', url);
       

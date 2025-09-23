@@ -20,8 +20,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Data is required' });
       }
 
-      // Compress the data using base64 encoding
-      const compressedData = Buffer.from(data).toString('base64');
+      // Compress the data using URL-safe base64 encoding
+      const compressedData = Buffer.from(data).toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
       
       // Generate a simple ID (timestamp-based)
       const surpriseId = Date.now().toString(36);
@@ -48,8 +51,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'ID and data parameters are required' });
       }
 
-      // Decompress the data
-      const decompressedData = Buffer.from(data, 'base64').toString('utf8');
+      // Decompress the data from URL-safe base64
+      let base64Data = data
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      
+      // Add padding if needed
+      while (base64Data.length % 4) {
+        base64Data += '=';
+      }
+      
+      const decompressedData = Buffer.from(base64Data, 'base64').toString('utf8');
       
       return res.status(200).json({ 
         success: true,
