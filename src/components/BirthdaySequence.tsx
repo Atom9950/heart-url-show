@@ -67,7 +67,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           key={i}
           className="absolute w-3 h-3 rounded-full"
           style={{
-            backgroundColor: ['#FFD700', '#FF69B4', '#00CED1', '#FF6347', '#98FB98'][i % 5]
+            backgroundColor: ['var(--gold)', 'var(--rose)', '#00CED1', '#FF6347', '#98FB98'][i % 5]
           }}
           initial={{ x: window.innerWidth / 2, y: window.innerHeight / 2, rotate: 0, scale: 0 }}
           animate={{
@@ -152,7 +152,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             🎬
           </motion.div>
-          <h1 className="text-6xl font-bold text-white mb-4">HAPPY BIRTHDAY</h1>
+          <h1 className="text-6xl font-bold text-foreground mb-4">HAPPY BIRTHDAY</h1>
           <motion.h2 
             className="text-5xl bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent"
             initial={{ opacity: 0 }}
@@ -171,7 +171,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           transition={{ duration: 1.5, delay: 3 }}
         >
           <div className="text-7xl mb-4">🎉</div>
-          <h3 className="text-4xl text-white/80">You are</h3>
+          <h3 className="text-4xl text-foreground/80">You are</h3>
           <motion.p 
             className="text-6xl font-bold text-yellow-400"
             animate={{ scale: [1, 1.2, 1] }}
@@ -189,7 +189,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           transition={{ duration: 2, delay: 5 }}
         >
           <motion.h3 
-            className="text-3xl text-white/70 mb-8"
+            className="text-3xl text-foreground/70 mb-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5 }}
@@ -197,7 +197,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
             A Special Message
           </motion.h3>
           
-          <div className="text-xl text-white/90 leading-relaxed space-y-6">
+          <div className="text-xl text-foreground/90 leading-relaxed space-y-6">
             {message.split('\n').map((line, index) => (
               <motion.p
                 key={index}
@@ -226,8 +226,8 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             💖
           </motion.div>
-          <h3 className="text-4xl text-white mb-4">With Love and Best Wishes</h3>
-          <p className="text-2xl text-white/70">May your year be filled with joy!</p>
+          <h3 className="text-4xl text-foreground mb-4">With Love and Best Wishes</h3>
+          <p className="text-2xl text-foreground/70">May your year be filled with joy!</p>
         </motion.div>
 
         {/* The End */}
@@ -244,8 +244,8 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             🌟
           </motion.div>
-          <h2 className="text-5xl font-bold text-white">THAT'S IT</h2>
-          <p className="text-2xl text-white/60 mt-4">I Love You So Much!</p>
+          <h2 className="text-5xl font-bold text-foreground">THAT'S IT</h2>
+          <p className="text-2xl text-foreground/60 mt-4">I Love You So Much!</p>
         </motion.div>
       </motion.div>
 
@@ -256,7 +256,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    <div className="fixed inset-0 overflow-hidden bg-romantic-darker">
       <AnimatePresence mode="wait">
         {/* Dark Room Step */}
         {step === 'dark' && (
@@ -269,7 +269,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
             transition={fadeInTransition}
           >
             <motion.h2
-              className="text-2xl md:text-3xl text-white font-bold text-center px-4"
+              className="text-2xl md:text-3xl text-foreground font-bold text-center px-4"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.5 }}
@@ -319,13 +319,13 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         {step === 'room' && (
           <motion.div
             key="room"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex items-center justify-center"
+            className="absolute inset-0 bg-gradient-to-br from-romantic-dark/60 to-romantic-darker/70 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5 }}
           >
             <motion.h2
-              className="text-2xl md:text-3xl text-white font-bold text-center px-4"
+              className="text-2xl md:text-3xl text-foreground font-bold text-center px-4"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ ...scaleInTransition, delay: 0.5 }}
@@ -340,7 +340,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         {step === 'decorations' && (
           <motion.div
             key="decorations"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
+            className="absolute inset-0 bg-gradient-to-br from-romantic-dark/60 to-romantic-darker/70 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
@@ -353,7 +353,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
               transition={{ duration: 0.6, delay: 2.0 }}
             >
               <motion.button
-                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
+                className="bg-gradient-to-r from-rose to-purple-600 text-foreground px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
                 onClick={handleCakeButtonClick}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -369,7 +369,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         {(step === 'cake' || step === 'candles') && (
           <motion.div
             key="cake"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
+            className="absolute inset-0 bg-gradient-to-br from-romantic-dark/60 to-romantic-darker/70 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
@@ -393,7 +393,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
               {/* Text positioned below the cake */}
               {candlesLit && (
                 <motion.p 
-                  className="text-white text-xl font-bold text-center px-4 z-10 relative" 
+                  className="text-foreground text-xl font-bold text-center px-4 z-10 relative" 
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1 }}
@@ -410,7 +410,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         {step === 'gift' && (
           <motion.div
             key="gift"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
+            className="absolute inset-0 bg-gradient-to-br from-romantic-dark/60 to-romantic-darker/70 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
@@ -438,7 +438,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
               
               {/* Text positioned below the gift */}
               <motion.p 
-                className="text-white text-xl font-bold text-center px-4 z-10 relative" 
+                className="text-foreground text-xl font-bold text-center px-4 z-10 relative" 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1 }}
@@ -473,7 +473,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
                 >
                   <motion.button
                     onClick={onComplete}
-                    className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-4 rounded-full font-bold text-xl shadow-2xl border-2 border-white/20"
+                    className="bg-gradient-to-r from-rose to-purple-600 text-foreground px-12 py-4 rounded-full font-bold text-xl shadow-2xl border-2 border-white/20"
                     whileHover={{ scale: 1.1, boxShadow: "0 20px 40px rgba(255, 105, 180, 0.4)" }}
                     whileTap={{ scale: 0.95 }}
                     animate={{ y: [0, -5, 0] }}
