@@ -1,6 +1,9 @@
 // Using LZ-String compression for better URL encoding
 import LZString from 'lz-string';
 
+// In-memory storage for surprise data (in production, use a database)
+const surpriseStorage = new Map();
+
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,10 +33,11 @@ export default async function handler(req, res) {
       
       // Generate a simple ID (timestamp-based)
       const surpriseId = Date.now().toString(36);
-      
+      // Store the compressed data
+      surpriseStorage.set(surpriseId, compressedData);
+
       return res.status(200).json({ 
         id: surpriseId,
-        compressedData: compressedData,
         success: true,
         message: 'Surprise data processed successfully'
       });
@@ -47,16 +51,21 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     // "Retrieve" surprise data by decompressing
     try {
-      const { id, data } = req.query;
+      const { id } = req.query;
       
-      if (!id || !data) {
-        return res.status(400).json({ error: 'ID and data parameters are required' });
+      if (!id) {
+        return res.status(400).json({ error: 'ID parameter is required' });
       }
 
-      console.log('Received compressed data size:', data.length);
+      const compressedData = surpriseStorage.get(id);
+      if (!compressedData) {
+        return res.status(404).json({ error: 'Surprise not found' });
+      }
+
+      console.log('Received compressed data size:', compressedData.length);
 
       // Decompress the data using LZ-String
-      const decompressedData = LZString.decompressFromEncodedURIComponent(data);
+      const decompressedData = LZString.decompressFromEncodedURIComponent(compressedData);
       
       if (!decompressedData) {
         throw new Error('Failed to decompress data - data may be corrupted');
