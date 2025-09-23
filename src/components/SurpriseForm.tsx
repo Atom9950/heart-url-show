@@ -162,14 +162,25 @@ export const SurpriseForm = () => {
       const dataString = JSON.stringify(dataToStore);
       console.log('Data size to store:', dataString.length, 'characters');
       
-      // Generate a unique ID for this surprise
-      const surpriseId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      // Process the data on the server to get compressed version
+      const response = await fetch('/api/surprise', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: dataString }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process surprise data on server');
+      }
+
+      const result = await response.json();
+      const surpriseId = result.id;
+      const compressedData = result.compressedData;
       
-      // Store the data in IndexedDB
-      await storeSurpriseData(surpriseId, dataString);
-      
-      // Create the URL with just the ID
-      const url = `${window.location.origin}/#/surprise?id=${surpriseId}`;
+      // Create the URL with both ID and compressed data
+      const url = `${window.location.origin}/#/surprise?id=${surpriseId}&data=${encodeURIComponent(compressedData)}`;
       console.log('Final URL length:', url.length, 'characters');
       console.log('Final URL:', url);
       
@@ -196,7 +207,7 @@ export const SurpriseForm = () => {
       console.error('Error generating URL:', error);
       toast({
         title: "Generation failed",
-        description: "Failed to create surprise link. Try using fewer or smaller images.",
+        description: "Failed to create surprise link. Please try again.",
         variant: "destructive",
       });
     }

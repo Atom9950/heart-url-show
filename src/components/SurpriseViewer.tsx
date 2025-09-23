@@ -81,45 +81,52 @@ export const SurpriseViewer = () => {
       if (window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
         surpriseId = hashParams.get('id');
-      }
-      
-      console.log('Surprise ID:', surpriseId);
-      console.log('Full URL:', window.location.href);
-      console.log('Hash:', window.location.hash);
-      
-      if (!surpriseId) {
-        setError('No surprise ID found in the URL');
-        return;
-      }
-
-      try {
-        // Retrieve the data from IndexedDB
-        const dataString = await getSurpriseData(surpriseId);
-        console.log('Retrieved data size:', dataString?.length || 0);
+        const compressedData = hashParams.get('data');
         
-        if (!dataString) {
-          setError('Surprise data not found - the link may be expired or invalid');
+        console.log('Surprise ID:', surpriseId);
+        console.log('Compressed data available:', !!compressedData);
+        console.log('Full URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+        
+        if (!surpriseId || !compressedData) {
+          setError('Invalid surprise link - missing data');
           return;
         }
 
-        console.log('Parsing JSON data...');
-        const parsed = JSON.parse(dataString) as SurpriseData;
-        console.log('Parsed data:', {
-          name: parsed.name,
-          imageCount: parsed.images?.length || 0,
-          hasMessage: !!parsed.message,
-          hasMusic: !!parsed.music
-        });
-        
-        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-          setError('Invalid surprise data format - missing required fields');
-          return;
-        }
+        try {
+          // Decode the data from the URL using the server
+          const response = await fetch(`/api/surprise?id=${surpriseId}&data=${encodeURIComponent(compressedData)}`);
+          
+          if (!response.ok) {
+            setError('Failed to decode surprise data');
+            return;
+          }
 
-        setSurpriseData(parsed);
-      } catch (err) {
-        console.error('Error parsing surprise data:', err);
-        setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          const result = await response.json();
+          const dataString = result.data;
+          console.log('Retrieved data size:', dataString?.length || 0);
+
+          console.log('Parsing JSON data...');
+          const parsed = JSON.parse(dataString) as SurpriseData;
+          console.log('Parsed data:', {
+            name: parsed.name,
+            imageCount: parsed.images?.length || 0,
+            hasMessage: !!parsed.message,
+            hasMusic: !!parsed.music
+          });
+          
+          if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+            setError('Invalid surprise data format - missing required fields');
+            return;
+          }
+
+          setSurpriseData(parsed);
+        } catch (err) {
+          console.error('Error loading surprise data:', err);
+          setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      } else {
+        setError('No surprise data found in URL');
       }
     };
 
