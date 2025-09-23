@@ -1,5 +1,5 @@
-// Simple storage using URL encoding approach
-// Data is encoded directly in the URL to make it fully shareable
+// Using LZ-String compression for better URL encoding
+import LZString from 'lz-string';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -20,11 +20,13 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Data is required' });
       }
 
-      // Compress the data using URL-safe base64 encoding
-      const compressedData = Buffer.from(data).toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+      console.log('Original data size:', data.length);
+
+      // Compress the data using LZ-String (designed for URLs)
+      const compressedData = LZString.compressToEncodedURIComponent(data);
+      
+      console.log('Compressed data size:', compressedData.length);
+      console.log('Compression ratio:', (compressedData.length / data.length * 100).toFixed(1) + '%');
       
       // Generate a simple ID (timestamp-based)
       const surpriseId = Date.now().toString(36);
@@ -51,17 +53,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'ID and data parameters are required' });
       }
 
-      // Decompress the data from URL-safe base64
-      let base64Data = data
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
+      console.log('Received compressed data size:', data.length);
+
+      // Decompress the data using LZ-String
+      const decompressedData = LZString.decompressFromEncodedURIComponent(data);
       
-      // Add padding if needed
-      while (base64Data.length % 4) {
-        base64Data += '=';
+      if (!decompressedData) {
+        throw new Error('Failed to decompress data - data may be corrupted');
       }
       
-      const decompressedData = Buffer.from(base64Data, 'base64').toString('utf8');
+      console.log('Decompressed data size:', decompressedData.length);
       
       return res.status(200).json({ 
         success: true,
@@ -70,7 +71,7 @@ export default async function handler(req, res) {
       
     } catch (error) {
       console.error('Error retrieving surprise:', error);
-      return res.status(500).json({ error: 'Failed to retrieve surprise data' });
+      return res.status(500).json({ error: `Failed to retrieve surprise data: ${error.message}` });
     }
   }
 
