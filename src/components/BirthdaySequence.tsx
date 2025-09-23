@@ -29,7 +29,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
 
   useEffect(() => {
     if (step === 'dark') {
-      const timer = setTimeout(() => setStep('bulb'), 4000); // Increased from 2000 to 4000
+      const timer = setTimeout(() => setStep('bulb'), 4000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -37,12 +37,17 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
   const handleBulbClick = () => {
     if (step === 'bulb') {
       setStep('room');
-      setTimeout(() => setStep('decorations'), 2000); // Slightly increased timing
+      // Increased delay to ensure room message is visible longer
+      setTimeout(() => setStep('decorations'), 3000);
     }
   };
 
   const handleDecorationsComplete = () => {
-    setTimeout(() => setStep('cake'), 500); // Small delay for smoother transition
+    // No automatic transition - wait for button click
+  };
+
+  const handleCakeButtonClick = () => {
+    setStep('cake');
   };
 
   const handleCandleBlow = () => {
@@ -51,7 +56,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
       setShowConfetti(true);
       setTimeout(() => {
         setStep('gift');
-      }, 2500); // Slightly increased for better confetti viewing
+      }, 2500);
     }
   };
 
@@ -284,152 +289,161 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           </motion.div>
         )}
 
-        {/* Room Reveal & Decorations */}
-        {(step === 'room' || step === 'decorations' || step === 'cake' || step === 'candles' || step === 'gift') && (
+        {/* Room Reveal */}
+        {step === 'room' && (
           <motion.div
             key="room"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-purple-800/40"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-purple-800/40 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5 }}
           >
-            {step === 'room' && (
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={fadeInTransition}
-                onAnimationComplete={handleDecorationsComplete}
+            <motion.h2
+              className="text-2xl md:text-3xl text-white font-bold text-center px-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ ...scaleInTransition, delay: 0.5 }}
+            >
+              Welcome to your special day! ✨
+            </motion.h2>
+          </motion.div>
+        )}
+
+        {/* Decorations Step */}
+        {step === 'decorations' && (
+          <motion.div
+            key="decorations"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-purple-800/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={fadeInTransition}
+          >
+            <PartyDecorations />
+            <motion.div
+              className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...slideUpTransition, delay: 2.0 }}
+            >
+              <motion.button
+                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
+                onClick={handleCakeButtonClick}
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ 
+                  scale: 0.95,
+                  transition: { duration: 0.1 }
+                }}
               >
-                <motion.h2
-                  className="text-2xl md:text-3xl text-white font-bold text-center px-4"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ ...scaleInTransition, delay: 1 }}
-                >
-                  Welcome to your special day! ✨
-                </motion.h2>
-              </motion.div>
-            )}
+                🎂 Bring the Cake!
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
 
-            {step === 'decorations' && (
+        {/* Cake & Candles Steps */}
+        {(step === 'cake' || step === 'candles') && (
+          <motion.div
+            key="cake"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-purple-800/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={fadeInTransition}
+          >
+            <PartyDecorations />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.div
-                className="absolute inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={fadeInTransition}
+                className="relative cursor-pointer"
+                onClick={handleCandleBlow}
+                initial={{ opacity: 0, scale: 0, y: 50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={bounceTransition}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{
+                  scale: 0.95,
+                  transition: { duration: 0.1 }
+                }}
               >
-                <PartyDecorations />
-                <motion.div
-                  className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...slideUpTransition, delay: 2.5 }}
-                >
-                  <motion.button
-                    className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
-                    onClick={() => setStep('cake')}
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-                      transition: { duration: 0.2 }
-                    }}
-                    whileTap={{ 
-                      scale: 0.95,
-                      transition: { duration: 0.1 }
-                    }}
-                  >
-                    🎂 Bring the Cake!
-                  </motion.button>
-                </motion.div>
+                <div className="w-64 h-64 mx-auto text-[16rem] leading-none">
+                  🎂
+                </div>
+                <CandleFlames />
               </motion.div>
-            )}
-
-            {(step === 'cake' || step === 'candles') && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <motion.div
-                  className="relative cursor-pointer"
-                  onClick={handleCandleBlow}
-                  initial={{ opacity: 0, scale: 0, y: 50 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={bounceTransition}
-                  whileHover={{ 
-                    scale: 1.05,
-                    transition: { duration: 0.2 }
-                  }}
-                  whileTap={{
-                    scale: 0.95,
-                    transition: { duration: 0.1 }
-                  }}
-                >
-                  <div className="w-64 h-64 mx-auto text-[16rem] leading-none">
-                    🎂
-                  </div>
-                  <CandleFlames />
-                </motion.div>
-                
-                {candlesLit && (
-                  <motion.p
-                    className="text-white text-lg mt-8 text-center px-4"
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...slideUpTransition, delay: 1 }}
-                  >
-                    Blow the candles and make a wish! 🕯️✨
-                  </motion.p>
-                )}
-              </div>
-            )}
-
-            {step === 'gift' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <motion.div
-                  className="cursor-pointer"
-                  onClick={handleGiftClick}
-                  initial={{ opacity: 0, scale: 0, y: 50 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={bounceTransition}
-                  whileHover={{ 
-                    scale: 1.1, 
-                    rotate: 5,
-                    transition: { duration: 0.3 }
-                  }}
-                  whileTap={{ 
-                    scale: 0.9,
-                    transition: { duration: 0.1 }
-                  }}
-                >
-                  <motion.div
-                    className="w-48 h-48 mx-auto text-[12rem] leading-none"
-                    animate={{
-                      filter: [
-                        "drop-shadow(0 0 10px #FFD700)",
-                        "drop-shadow(0 0 20px #FF69B4)",
-                        "drop-shadow(0 0 10px #FFD700)"
-                      ]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    🎁
-                  </motion.div>
-                </motion.div>
+              
+              {candlesLit && (
                 <motion.p
-                  className="text-white text-lg mt-6 text-center px-4"
+                  className="text-white text-lg mt-8 text-center px-4"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...slideUpTransition, delay: 1 }}
                 >
-                  Tap to open your special gift! 🎁
+                  Blow the candles and make a wish! 🕯️✨
                 </motion.p>
-              </div>
-            )}
+              )}
+            </div>
+          </motion.div>
+        )}
 
-            {/* Decorations persist through all room steps */}
-            {(step === 'cake' || step === 'candles' || step === 'gift') && <PartyDecorations />}
+        {/* Gift Step */}
+        {step === 'gift' && (
+          <motion.div
+            key="gift"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-blue-900/30 to-purple-800/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={fadeInTransition}
+          >
+            <PartyDecorations />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <motion.div
+                className="cursor-pointer"
+                onClick={handleGiftClick}
+                initial={{ opacity: 0, scale: 0, y: 50 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={bounceTransition}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: 5,
+                  transition: { duration: 0.3 }
+                }}
+                whileTap={{ 
+                  scale: 0.9,
+                  transition: { duration: 0.1 }
+                }}
+              >
+                <motion.div
+                  className="w-48 h-48 mx-auto text-[12rem] leading-none"
+                  animate={{
+                    filter: [
+                      "drop-shadow(0 0 10px #FFD700)",
+                      "drop-shadow(0 0 20px #FF69B4)",
+                      "drop-shadow(0 0 10px #FFD700)"
+                    ]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  🎁
+                </motion.div>
+              </motion.div>
+              <motion.p
+                className="text-white text-lg mt-6 text-center px-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...slideUpTransition, delay: 1 }}
+              >
+                Tap to open your special gift! 🎁
+              </motion.p>
+            </div>
           </motion.div>
         )}
 
