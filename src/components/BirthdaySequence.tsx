@@ -32,7 +32,6 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
     }
     
     if (step === 'final') {
-      // Show button after credit animation completes (approximately 30 seconds)
       const buttonTimer = setTimeout(() => setShowButton(true), 30000);
       return () => clearTimeout(buttonTimer);
     }
@@ -133,9 +132,9 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         initial={{ y: "100vh" }}
         animate={{ y: "-200%" }}
         transition={{
-          duration: 25, // Slower scroll for dramatic effect
+          duration: 25,
           ease: "linear",
-          delay: 1 // Short delay before starting
+          delay: 1
         }}
         onAnimationComplete={() => setShowButton(true)}
       >
@@ -305,7 +304,12 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
                 💡
               </motion.div>
             </motion.div>
-            <motion.p className="text-yellow-400 text-lg text-center px-4">
+            <motion.p 
+              className="text-yellow-400 text-lg text-center px-4 font-bold"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
               Tap the bulb to light up the room! 💡
             </motion.p>
           </motion.div>
@@ -348,7 +352,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
               transition={{ duration: 0.6, delay: 2.0 }}
             >
               <motion.button
-                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg"
+                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
                 onClick={handleCakeButtonClick}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -359,7 +363,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           </motion.div>
         )}
 
-        {/* Cake & Candles Steps */}
+        {/* Cake & Candles Steps - FIXED OVERLAPPING */}
         {(step === 'cake' || step === 'candles') && (
           <motion.div
             key="cake"
@@ -370,18 +374,29 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             <PartyDecorations />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.div
-                className="relative cursor-pointer"
-                onClick={handleCandleBlow}
-                initial={{ opacity: 0, scale: 0, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={bounceTransition}
-              >
-                <div className="w-64 h-64 mx-auto text-[16rem]">🎂</div>
-                <CandleFlames />
-              </motion.div>
+              {/* Cake container with proper spacing */}
+              <div className="relative mb-8"> {/* Added margin bottom to create space for text */}
+                <motion.div
+                  className="relative cursor-pointer"
+                  onClick={handleCandleBlow}
+                  initial={{ opacity: 0, scale: 0, y: 50 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={bounceTransition}
+                >
+                  <div className="w-64 h-64 mx-auto text-[16rem] leading-none">🎂</div>
+                  <CandleFlames />
+                </motion.div>
+              </div>
+              
+              {/* Text positioned below the cake with proper z-index */}
               {candlesLit && (
-                <motion.p className="text-white text-lg mt-8 text-center px-4">
+                <motion.p 
+                  className="text-white text-xl font-bold text-center px-4 mt-4 z-10 relative" 
+                  // Added z-10, relative, larger text, bold, and margin top
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1 }}
+                >
                   Blow the candles and make a wish! 🕯️✨
                 </motion.p>
               )}
@@ -389,7 +404,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           </motion.div>
         )}
 
-        {/* Gift Step */}
+        {/* Gift Step - FIXED OVERLAPPING */}
         {step === 'gift' && (
           <motion.div
             key="gift"
@@ -400,22 +415,33 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             <PartyDecorations />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.div
-                className="cursor-pointer"
-                onClick={handleGiftClick}
-                initial={{ opacity: 0, scale: 0, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={bounceTransition}
-              >
+              {/* Gift container with proper spacing */}
+              <div className="relative mb-8"> {/* Added margin bottom to create space for text */}
                 <motion.div
-                  className="w-48 h-48 mx-auto text-[12rem]"
-                  animate={{ filter: ["drop-shadow(0 0 10px #FFD700)", "drop-shadow(0 0 20px #FF69B4)", "drop-shadow(0 0 10px #FFD700)"] }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  className="cursor-pointer"
+                  onClick={handleGiftClick}
+                  initial={{ opacity: 0, scale: 0, y: 50 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={bounceTransition}
                 >
-                  🎁
+                  <motion.div
+                    className="w-48 h-48 mx-auto text-[12rem] leading-none"
+                    animate={{ filter: ["drop-shadow(0 0 10px #FFD700)", "drop-shadow(0 0 20px #FF69B4)", "drop-shadow(0 0 10px #FFD700)"] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🎁
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-              <motion.p className="text-white text-lg mt-6 text-center px-4">
+              </div>
+              
+              {/* Text positioned below the gift with proper z-index */}
+              <motion.p 
+                className="text-white text-xl font-bold text-center px-4 mt-4 z-10 relative" 
+                // Added z-10, relative, larger text, bold, and margin top
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1 }}
+              >
                 Tap to open your special gift! 🎁
               </motion.p>
             </div>
