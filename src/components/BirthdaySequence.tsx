@@ -26,6 +26,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
   const [step, setStep] = useState<SequenceStep>('dark');
   const [candlesLit, setCandlesLit] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(false);
 
   useEffect(() => {
     if (step === 'dark') {
@@ -37,13 +38,8 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
   const handleBulbClick = () => {
     if (step === 'bulb') {
       setStep('room');
-      // Increased delay to ensure room message is visible longer
       setTimeout(() => setStep('decorations'), 3000);
     }
-  };
-
-  const handleDecorationsComplete = () => {
-    // No automatic transition - wait for button click
   };
 
   const handleCakeButtonClick = () => {
@@ -63,6 +59,8 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
   const handleGiftClick = () => {
     if (step === 'gift') {
       setStep('final');
+      // Show scroll hint after a delay
+      setTimeout(() => setShowScrollHint(true), 3000);
     }
   };
 
@@ -210,6 +208,233 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
       </div>
     );
   };
+
+  // Movie credit style animation components
+  const MovieCreditMessage = () => (
+    <motion.div
+      className="relative w-full max-w-4xl mx-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 2 }}
+    >
+      {/* Scroll hint */}
+      <AnimatePresence>
+        {showScrollHint && (
+          <motion.div
+            className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-white/70 text-sm mb-4 flex items-center space-x-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.span
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              ⬇️
+            </motion.span>
+            <span>Scroll to read your message</span>
+            <motion.span
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+            >
+              ⬇️
+            </motion.span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Message container with movie credit scroll */}
+      <motion.div
+        className="bg-white/5 backdrop-blur-lg rounded-3xl p-12 border border-white/20 shadow-2xl mb-12 overflow-hidden relative"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.5, type: "spring" }}
+      >
+        {/* Top fade effect */}
+        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-purple-900/60 to-transparent z-10" />
+        
+        {/* Bottom fade effect */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-purple-900/60 to-transparent z-10" />
+        
+        {/* Movie credit scroll container */}
+        <motion.div
+          className="relative h-96 overflow-y-auto scrollbar-hide"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 2 }}
+          onScroll={() => setShowScrollHint(false)}
+        >
+          <motion.div
+            className="text-center space-y-8 py-8"
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            transition={{ 
+              duration: 3, 
+              ease: "easeOut",
+              delay: 0.5 
+            }}
+          >
+            {/* Opening credits style */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, delay: 1 }}
+            >
+              <motion.div
+                className="text-6xl mb-4"
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 2, -2, 0]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                🎬
+              </motion.div>
+              <h3 className="text-2xl text-white/80 font-light mb-2">A Special Message For</h3>
+              <motion.h2 
+                className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1, delay: 1.5 }}
+              >
+                {name}
+              </motion.h2>
+            </motion.div>
+
+            {/* Message content with typewriter effect */}
+            <motion.div
+              className="text-lg text-white/90 leading-relaxed whitespace-pre-wrap text-left max-w-2xl mx-auto px-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 2, delay: 2.5 }}
+            >
+              {message.split('\n').map((line, index) => (
+                <motion.p
+                  key={index}
+                  className="mb-6 font-light text-xl"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ 
+                    duration: 1, 
+                    delay: 3 + (index * 0.3),
+                    ease: "easeOut"
+                  }}
+                >
+                  {line}
+                </motion.p>
+              ))}
+            </motion.div>
+
+            {/* Closing credits */}
+            <motion.div
+              className="pt-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 2, delay: 4 }}
+            >
+              <motion.div
+                className="text-4xl mb-4"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                🎉
+              </motion.div>
+              <motion.h3 
+                className="text-3xl font-bold text-white mb-2"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.5, delay: 4.5 }}
+              >
+                Happy {age}th Birthday!
+              </motion.h3>
+              <motion.p 
+                className="text-white/70 text-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1.5, delay: 5 }}
+              >
+                With love and best wishes 💖
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+
+  const MovieCreditButton = () => (
+    <motion.div
+      className="relative"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 1.5, 
+        delay: 6,
+        type: "spring",
+        stiffness: 100
+      }}
+    >
+      {/* Button glow effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full blur-lg opacity-50"
+        animate={{ 
+          opacity: [0.3, 0.6, 0.3],
+          scale: [1, 1.05, 1]
+        }}
+        transition={{ 
+          duration: 2, 
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      <motion.button
+        onClick={onComplete}
+        className="relative bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-6 rounded-full font-bold text-xl shadow-2xl border-2 border-white/20"
+        whileHover={{ 
+          scale: 1.08,
+          boxShadow: "0 20px 40px rgba(255, 105, 180, 0.4)",
+          transition: { duration: 0.3 }
+        }}
+        whileTap={{ 
+          scale: 0.95,
+          transition: { duration: 0.1 }
+        }}
+        animate={{
+          y: [0, -5, 0],
+          boxShadow: [
+            "0 10px 30px rgba(255, 105, 180, 0.3)",
+            "0 15px 40px rgba(255, 105, 180, 0.5)",
+            "0 10px 30px rgba(255, 105, 180, 0.3)"
+          ]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      >
+        <motion.span
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="inline-block mr-3"
+        >
+          🔄
+        </motion.span>
+        Roll Credits Again
+        <motion.span
+          animate={{ rotate: [0, -10, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+          className="inline-block ml-3"
+        >
+          🎬
+        </motion.span>
+      </motion.button>
+    </motion.div>
+  );
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
@@ -447,75 +672,37 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           </motion.div>
         )}
 
-        {/* Final Message */}
+        {/* Final Message with Movie Credit Style */}
         {step === 'final' && (
           <motion.div
             key="final"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-blue-900/40 to-purple-800/50 overflow-auto"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/60 to-purple-800/70 overflow-y-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={fadeInTransition}
+            transition={{ duration: 2 }}
           >
-            <div className="min-h-screen flex flex-col items-center justify-center p-8">
+            <div className="min-h-screen flex flex-col items-center justify-center p-8 py-20">
               <motion.div
-                className="text-center max-w-2xl"
-                initial={{ opacity: 0, scale: 0.8 }}
+                className="text-center w-full"
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ ...scaleInTransition, delay: 0.5 }}
+                transition={{ duration: 1.5, type: "spring" }}
               >
-                <motion.div
-                  className="text-6xl mb-6"
-                  animate={{ 
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1]
-                  }}
-                  transition={{ 
-                    duration: 3, 
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  💖
-                </motion.div>
-                
+                {/* Main title */}
                 <motion.h2 
-                  className="text-3xl md:text-4xl font-bold text-white mb-6"
-                  initial={{ opacity: 0, y: 30 }}
+                  className="text-4xl md:text-5xl font-bold text-white mb-12"
+                  initial={{ opacity: 0, y: -50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...slideUpTransition, delay: 0.8 }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
                 >
-                  Happy Birthday, {name}! 🎉
+                  🎉 THE END 🎉
                 </motion.h2>
                 
-                <motion.div
-                  className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl mb-8"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...slideUpTransition, delay: 1.2 }}
-                >
-                  <p className="text-lg text-white leading-relaxed whitespace-pre-wrap">
-                    {message}
-                  </p>
-                </motion.div>
+                {/* Movie credit style message */}
+                <MovieCreditMessage />
                 
-                <motion.button
-                  onClick={onComplete}
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...slideUpTransition, delay: 1.6 }}
-                  whileHover={{ 
-                    scale: 1.05,
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-                    transition: { duration: 0.2 }
-                  }}
-                  whileTap={{ 
-                    scale: 0.95,
-                    transition: { duration: 0.1 }
-                  }}
-                >
-                  🔄 Experience the Magic Again
-                </motion.button>
+                {/* Movie credit style button */}
+                <MovieCreditButton />
               </motion.div>
             </div>
           </motion.div>
