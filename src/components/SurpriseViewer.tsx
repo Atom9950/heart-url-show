@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { RomanticIntro } from './RomanticIntro';
 import { BirthdaySequence } from './BirthdaySequence';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,124 +13,106 @@ interface SurpriseData {
   music?: string;
 }
 
-// IndexedDB utility functions
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('SurpriseAppDB', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('surprises')) {
-        db.createObjectStore('surprises', { keyPath: 'id' });
-      }
-    };
-  });
-};
-
-const getSurpriseData = async (id: string): Promise<string | null> => {
-  try {
-    const db = await openDB();
-    const transaction = db.transaction('surprises', 'readonly');
-    const store = transaction.objectStore('surprises');
-    
-    return new Promise((resolve, reject) => {
-      const request = store.get(id);
-      
-      request.onsuccess = () => {
-        if (request.result) {
-          // Check if data is expired (older than 24 hours)
-          const isExpired = Date.now() - request.result.timestamp > 24 * 60 * 60 * 1000;
-          if (isExpired) {
-            // Clean up expired data
-            const deleteTransaction = db.transaction('surprises', 'readwrite');
-            const deleteStore = deleteTransaction.objectStore('surprises');
-            deleteStore.delete(id);
-            resolve(null);
-          } else {
-            resolve(request.result.data);
-          }
-        } else {
-          resolve(null);
-        }
-      };
-      
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Error retrieving data from IndexedDB:', error);
-    return null;
-  }
-};
-
 export const SurpriseViewer = () => {
-  const [searchParams] = useSearchParams();
   const [surpriseData, setSurpriseData] = useState<SurpriseData | null>(null);
   const [currentPhase, setCurrentPhase] = useState<'intro' | 'birthday' | 'complete'>('intro');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadSurpriseData = async () => {
-      // For HashRouter, we need to handle the hash portion
-      let surpriseId = null;
-      
-      // Check if we're in a hash URL
-      if (window.location.hash) {
-        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-        surpriseId = hashParams.get('id');
-        const compressedData = hashParams.get('data');
-        
-        console.log('Surprise ID:', surpriseId);
-        console.log('Compressed data available:', !!compressedData);
-        console.log('Full URL:', window.location.href);
-        console.log('Hash:', window.location.hash);
-        
-        if (!surpriseId || !compressedData) {
-          setError('Invalid surprise link - missing data');
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Parse hash URL parameters
+        const hash = window.location.hash;
+        console.log('Full hash:', hash);
+
+        if (!hash || !hash.includes('?')) {
+          setError('Invalid surprise link - no parameters found');
           return;
         }
 
-        try {
-          // Decode the data from the URL using the server (no encoding needed with URL-safe base64)
-          const response = await fetch(`/api/surprise?id=${surpriseId}&data=${compressedData}`);
-          
-          if (!response.ok) {
-            setError('Failed to decode surprise data');
-            return;
-          }
-
-          const result = await response.json();
-          const dataString = result.data;
-          console.log('Retrieved data size:', dataString?.length || 0);
-
-          console.log('Parsing JSON data...');
-          const parsed = JSON.parse(dataString) as SurpriseData;
-          console.log('Parsed data:', {
-            name: parsed.name,
-            imageCount: parsed.images?.length || 0,
-            hasMessage: !!parsed.message,
-            hasMusic: !!parsed.music
-          });
-          
-          if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
-            setError('Invalid surprise data format - missing required fields');
-            return;
-          }
-
-          setSurpriseData(parsed);
-        } catch (err) {
-          console.error('Error loading surprise data:', err);
-          setError(`Failed to load surprise data: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        // Extract query string from hash (everything after the ?)
+        const queryString = hash.split('?')[1];
+        const hashParams = new URLSearchParams(queryString);
+        
+        const surpriseId = hashParams.get('id');
+        const compressedData = hashParams.get('data');
+        
+        console.log('Surprise ID:', surpriseId);
+        console.log('Has compressed data:', !!compressedData);
+        console.log('Compressed data length:', compressedData?.length || 0);
+        
+        if (!surpriseId || !compressedData) {
+          setError('Invalid surprise link - missing required parameters');
+          return;
         }
-      } else {
-        setError('No surprise data found in URL');
+
+        // Make API call to decompress the data
+        const apiUrl = `/api/surprise?id=${encodeURIComponent(surpriseId)}&data=${encodeURIComponent(compressedData)}`;
+        console.log('Making API call to:', apiUrl);
+
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('API response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API error response:', errorText);
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            setError(errorData.error || `Server error: ${response.status}`);
+          } catch {
+            setError(`Failed to decode surprise data (Status: ${response.status})`);
+          }
+          return;
+        }
+
+        const result = await response.json();
+        console.log('API response:', result);
+
+        if (!result.success || !result.data) {
+          setError('Invalid response from server');
+          return;
+        }
+
+        // Parse the decompressed data
+        const parsed = JSON.parse(result.data) as SurpriseData;
+        console.log('Parsed surprise data:', {
+          name: parsed.name,
+          imageCount: parsed.images?.length || 0,
+          hasMessage: !!parsed.message,
+          hasMusic: !!parsed.music,
+          age: parsed.age
+        });
+        
+        // Validate required fields
+        if (!parsed.name || !parsed.message || !parsed.images || parsed.images.length === 0) {
+          setError('Invalid surprise data - missing required information');
+          return;
+        }
+
+        setSurpriseData(parsed);
+        
+      } catch (err) {
+        console.error('Error loading surprise data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load surprise data');
+      } finally {
+        setLoading(false);
       }
     };
 
     loadSurpriseData();
-  }, [searchParams]);
+  }, []); // Remove searchParams dependency since we're not using useSearchParams
 
   const handleIntroComplete = () => {
     setCurrentPhase('birthday');
@@ -145,6 +126,21 @@ export const SurpriseViewer = () => {
     setCurrentPhase('intro');
   };
 
+  const handleGoHome = () => {
+    window.location.href = '/';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
+        <div className="text-center">
+          <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
+          <p className="text-foreground text-xl">Loading your magical surprise...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center p-4">
@@ -154,16 +150,25 @@ export const SurpriseViewer = () => {
             <h2 className="text-xl font-bold text-foreground mb-4">
               Oops! Something went wrong
             </h2>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-6 text-sm">
               {error}
             </p>
-            <Button
-              onClick={() => window.location.href = '/'}
-              className="romantic-button"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Create a New Surprise
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="w-full border-rose/30 hover:border-rose/50"
+              >
+                🔄 Try Again
+              </Button>
+              <Button
+                onClick={handleGoHome}
+                className="w-full romantic-button"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Create a New Surprise
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -175,7 +180,7 @@ export const SurpriseViewer = () => {
       <div className="min-h-screen bg-gradient-to-br from-romantic-dark via-background to-romantic-darker flex items-center justify-center">
         <div className="text-center">
           <Heart className="w-16 h-16 text-rose mx-auto mb-4 animate-heart-bounce" />
-          <p className="text-foreground text-xl">Loading your magical surprise...</p>
+          <p className="text-foreground text-xl">Preparing your surprise...</p>
         </div>
       </div>
     );
@@ -223,7 +228,7 @@ export const SurpriseViewer = () => {
               🔄 Experience Again
             </Button>
             <Button
-              onClick={() => window.location.href = '/'}
+              onClick={handleGoHome}
               variant="outline"
               className="w-full border-rose/30 hover:border-rose/50"
             >
