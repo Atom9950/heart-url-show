@@ -171,13 +171,13 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           transition={{ duration: 1.5, delay: 3 }}
         >
           <div className="text-7xl mb-4">🎉</div>
-          <h3 className="text-4xl text-white/80">Celebrating</h3>
+          <h3 className="text-4xl text-white/80">You are</h3>
           <motion.p 
             className="text-6xl font-bold text-yellow-400"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            {age} Years!
+            {age} Now!
           </motion.p>
         </motion.div>
 
@@ -244,8 +244,8 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
           >
             🌟
           </motion.div>
-          <h2 className="text-5xl font-bold text-white">THE END</h2>
-          <p className="text-2xl text-white/60 mt-4">Thank you for celebrating!</p>
+          <h2 className="text-5xl font-bold text-white">THAT'S IT</h2>
+          <p className="text-2xl text-white/60 mt-4">I Love You So Much!</p>
         </motion.div>
       </motion.div>
 
@@ -336,17 +336,18 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         )}
 
         {/* Decorations Step */}
+        {/* Decorations Step */}
         {step === 'decorations' && (
           <motion.div
             key="decorations"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
           >
             <PartyDecorations />
             <motion.div
-              className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
+              className="relative mt-8" // Changed from absolute positioning to relative with margin
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 2.0 }}
@@ -364,18 +365,19 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         )}
 
         {/* Cake & Candles Steps - FIXED OVERLAPPING */}
+        {/* Cake & Candles Steps */}
         {(step === 'cake' || step === 'candles') && (
           <motion.div
             key="cake"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
           >
             <PartyDecorations />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center w-full"> {/* Added container with centering */}
               {/* Cake container with proper spacing */}
-              <div className="relative mb-8"> {/* Added margin bottom to create space for text */}
+              <div className="flex justify-center items-center mb-8"> {/* Centered the cake */}
                 <motion.div
                   className="relative cursor-pointer"
                   onClick={handleCandleBlow}
@@ -383,16 +385,15 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={bounceTransition}
                 >
-                  <div className="w-64 h-64 mx-auto text-[16rem] leading-none">🎂</div>
+                  <div className="w-64 h-64 text-[16rem] leading-none flex justify-center items-center">🎂</div> {/* Centered the emoji */}
                   <CandleFlames />
                 </motion.div>
               </div>
               
-              {/* Text positioned below the cake with proper z-index */}
+              {/* Text positioned below the cake */}
               {candlesLit && (
                 <motion.p 
-                  className="text-white text-xl font-bold text-center px-4 mt-4 z-10 relative" 
-                  // Added z-10, relative, larger text, bold, and margin top
+                  className="text-white text-xl font-bold text-center px-4 z-10 relative" 
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 1 }}
@@ -405,18 +406,19 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         )}
 
         {/* Gift Step - FIXED OVERLAPPING */}
+        {/* Gift Step */}
         {step === 'gift' && (
           <motion.div
             key="gift"
-            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40"
+            className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-purple-800/40 flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={fadeInTransition}
           >
             <PartyDecorations />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center w-full"> {/* Added container with centering */}
               {/* Gift container with proper spacing */}
-              <div className="relative mb-8"> {/* Added margin bottom to create space for text */}
+              <div className="flex justify-center items-center mb-8"> {/* Centered the gift */}
                 <motion.div
                   className="cursor-pointer"
                   onClick={handleGiftClick}
@@ -425,7 +427,7 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
                   transition={bounceTransition}
                 >
                   <motion.div
-                    className="w-48 h-48 mx-auto text-[12rem] leading-none"
+                    className="w-48 h-48 text-[12rem] leading-none flex justify-center items-center" // Centered the emoji
                     animate={{ filter: ["drop-shadow(0 0 10px #FFD700)", "drop-shadow(0 0 20px #FF69B4)", "drop-shadow(0 0 10px #FFD700)"] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
@@ -434,10 +436,9 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
                 </motion.div>
               </div>
               
-              {/* Text positioned below the gift with proper z-index */}
+              {/* Text positioned below the gift */}
               <motion.p 
-                className="text-white text-xl font-bold text-center px-4 mt-4 z-10 relative" 
-                // Added z-10, relative, larger text, bold, and margin top
+                className="text-white text-xl font-bold text-center px-4 z-10 relative" 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1 }}
@@ -449,21 +450,22 @@ export const BirthdaySequence: React.FC<BirthdaySequenceProps> = ({
         )}
 
         {/* Final Step - Movie Credit Roll */}
+        {/* Final Step - Movie Credit Roll */}
         {step === 'final' && (
           <motion.div
             key="final"
-            className="absolute inset-0 bg-black"
+            className="absolute inset-0 bg-black flex flex-col items-center justify-center" // Added flex centering
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 2 }}
           >
             <MovieCreditRoll />
             
-            {/* Roll Credits Again Button - Appears after animation */}
+            {/* Roll Credits Again Button */}
             <AnimatePresence>
               {showButton && (
                 <motion.div
-                  className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20"
+                  className="relative mt-8" // Changed from absolute to relative positioning
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 50 }}
