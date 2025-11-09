@@ -333,7 +333,7 @@ export const SurpriseForm = () => {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <Label className="text-foreground font-medium">
                 Background Music (Optional)
               </Label>
@@ -347,7 +347,7 @@ export const SurpriseForm = () => {
                   {formData.music ? 'Music uploaded ✨' : 'Add a romantic song (name only)'}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             <motion.div
               className="pt-6"
@@ -362,10 +362,14 @@ export const SurpriseForm = () => {
                 <Send className="w-5 h-5 mr-2" />
                 Create Magical Surprise Link
               </Button>
+              <p className="text-foreground font-medium text-center mt-3">
+                ⏰ Note: This surprise link is valid for 5 minutes only
+              </p>
             </motion.div>
           </CardContent>
         </Card>
       </motion.div>
+      
     </div>
   );
 };
