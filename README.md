@@ -1,73 +1,121 @@
-# Welcome to your Lovable project
+# Heart URL Show - Romantic Birthday Surprise For Your Loved One!
 
-## Project info
+A beautiful, interactive web application designed to create memorable romantic birthday surprises with animated hearts and personalized messages.
 
-**URL**: https://lovable.dev/projects/db6a4174-6014-4e81-a5d4-2b9842b6f103
+<img width="1903" height="1091" alt="image" src="https://github.com/user-attachments/assets/e24a22cb-368d-4d47-980d-628745caecc0" />
 
-## How can I edit this code?
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+- 🎨 **Animated Heart Effects** - Beautiful floating heart animations
+- 💌 **Personalized Messages** - Custom birthday wishes and romantic notes
+- 🎉 **Interactive UI** - Engaging user experience with smooth transitions
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile devices
+- 🎵 **Audio Support** - Optional background music or sound effects
+- ⚡ **Fast Loading** - Optimized performance with Vercel deployment
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/db6a4174-6014-4e81-a5d4-2b9842b6f103) and start prompting.
+## 🚀 Live Demo
 
-Changes made via Lovable will be committed automatically to this repo.
+Check out the live application: [heart-url-show.vercel.app](https://heart-url-show.vercel.app/)
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend Framework**: React
+- **Styling**: CSS3 / Tailwind CSS
+- **Animations**: CSS Animations / Framer Motion
+- **Deployment**: Vercel
+- **Package Manager**: npm
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📦 Installation
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```bash
+git clone https://github.com/Atom9950/heart-url-show.git
+cd heart-url-show
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Run the development server:
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
 
-**Use GitHub Codespaces**
+4. Open [http://localhost:8080](http://localhost:8080) in your browser
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🎨 Customization
 
-## What technologies are used for this project?
+### Modify Messages
+Edit the messages in the configuration file:
+```javascript
+// config/messages.js
+export const messages = {
+  title: "Happy Birthday! 🎂",
+  subtitle: "To the most amazing person",
+  wishes: [
+    "Your custom wish here...",
+    "Another heartfelt message..."
+  ]
+};
+```
 
-This project is built with:
+### Change Colors
+Customize the color scheme in your CSS/Tailwind config:
+```css
+:root {
+  --primary-color: #ff69b4;
+  --secondary-color: #ff1493;
+  --background: #ffe4e1;
+}
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Adjust Animations
+Modify animation timings and effects:
+```css
+.heart {
+  animation: float 3s ease-in-out infinite;
+}
+```
 
-## How can I deploy this project?
+## 🎯 Usage
 
-Simply open [Lovable](https://lovable.dev/projects/db6a4174-6014-4e81-a5d4-2b9842b6f103) and click on Share -> Publish.
+1. **For Birthday Surprises**: Share the link with your loved one
+2. **Customize**: Personalize messages, colors, and animations
+3. **Deploy**: Host your own version with custom content
 
-## Can I connect a custom domain to my Lovable project?
+## 🚀 Deployment
 
-Yes, you can!
+### Deploy to Vercel
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Push your code to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Deploy with one click
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+# Or use Vercel CLI
+npm i -g vercel
+vercel
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+⭐ If you found this project helpful, please give it a star!
