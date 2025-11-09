@@ -263,7 +263,7 @@ export const SurpriseForm = () => {
 
               <div>
                 <Label htmlFor="age" className="text-foreground font-medium">
-                  Age (Optional)
+                  Age
                 </Label>
                 <Input
                   id="age"
