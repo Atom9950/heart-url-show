@@ -11,7 +11,6 @@ A beautiful, interactive web application designed to create memorable romantic b
 - 💌 **Personalized Messages** - Custom birthday wishes and romantic notes
 - 🎉 **Interactive UI** - Engaging user experience with smooth transitions
 - 📱 **Responsive Design** - Works seamlessly on desktop and mobile devices
-- 🎵 **Audio Support** - Optional background music or sound effects
 - ⚡ **Fast Loading** - Optimized performance with Vercel deployment
 
 ## 🚀 Live Demo
