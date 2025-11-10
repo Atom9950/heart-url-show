@@ -287,7 +287,7 @@ export const SurpriseForm = () => {
                 className="mt-2 bg-input border-rose/20 focus:border-rose min-h-[120px] resize-none"
                 placeholder="Pour your heart out... tell them how much they mean to you ❤️"
               />
-              <p className="text-white text-base mt-2">
+              <p className="text-white text-sm mt-2">
                 💡Tips: Write in paragraphs for better readability!
               </p>
             </div>
