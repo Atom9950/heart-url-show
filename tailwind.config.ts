@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily:{
+        playball:['Playball', 'cursive']
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

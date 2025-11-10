@@ -249,7 +249,7 @@ export const SurpriseForm = () => {
           <CardContent className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="name" className="text-foreground font-medium">
+                <Label htmlFor="name" className="text-foreground font-medium text-lg">
                   Their Name
                 </Label>
                 <Input
@@ -262,7 +262,7 @@ export const SurpriseForm = () => {
               </div>
 
               <div>
-                <Label htmlFor="age" className="text-foreground font-medium">
+                <Label htmlFor="age" className="text-foreground font-medium text-lg">
                   Age
                 </Label>
                 <Input
@@ -277,7 +277,7 @@ export const SurpriseForm = () => {
             </div>
 
             <div>
-              <Label htmlFor="message" className="text-foreground font-medium">
+              <Label htmlFor="message" className="text-foreground font-medium text-lg">
                 Your Romantic Message
               </Label>
               <Textarea
@@ -290,7 +290,7 @@ export const SurpriseForm = () => {
             </div>
 
             <div>
-              <Label className="text-foreground font-medium">
+              <Label className="text-foreground font-medium text-lg">
                 Romantic Photos (Up to 3)
               </Label>
               <div
@@ -362,7 +362,7 @@ export const SurpriseForm = () => {
                 <Send className="w-5 h-5 mr-2" />
                 Create Magical Surprise Link
               </Button>
-              <p className="text-foreground font-medium text-center mt-3">
+              <p className="text-foreground font-medium text-center mt-3 text-lg">
                 ⏰ Note: This surprise link is valid for 5 minutes only
               </p>
             </motion.div>
