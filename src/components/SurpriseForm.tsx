@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Heart, Music, Send } from 'lucide-react';
+import { Upload, Heart, Music, Send, Shield, Info } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import LZString from 'lz-string';
@@ -287,6 +287,9 @@ export const SurpriseForm = () => {
                 className="mt-2 bg-input border-rose/20 focus:border-rose min-h-[120px] resize-none"
                 placeholder="Pour your heart out... tell them how much they mean to you ❤️"
               />
+              <p className="text-white text-base mt-2">
+                💡Tips: Write in paragraphs for better readability!
+              </p>
             </div>
 
             <div>
@@ -366,6 +369,34 @@ export const SurpriseForm = () => {
                 ⏰ Note: This surprise link is valid for 5 minutes only
               </p>
             </motion.div>
+            <div className="mt-8">
+  <Card className="bg-input/50 border-rose/20 backdrop-blur-sm">
+    <CardContent className="p-6">
+      <div className="text-center mb-4">
+        <Shield className="w-8 h-8 text-rose mx-auto" />
+      </div>
+      <div className="space-y-3 text-left">
+        <h3 className="font-semibold text-white text-lg text-center mb-3">
+          Your Privacy Matters
+        </h3>
+        <div className="space-y-2 text-white text-sm">
+          <p className="flex items-start gap-2">
+            <span className="text-rose mt-0.5">•</span>
+            <span className="text-left text-base">We do not store your data by any means</span>
+          </p>
+          <p className="flex items-start gap-2">
+            <span className="text-rose mt-0.5">•</span>
+            <span className="text-left text-base">All data (names, images, texts) are stored locally in your browser which cannot be accessed</span>
+          </p>
+          <p className="flex items-start gap-2">
+            <span className="text-rose mt-0.5">•</span>
+            <span className="text-left text-base">After the link expires, it cannot be accessed again by anyone</span>
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
           </CardContent>
         </Card>
       </motion.div>
